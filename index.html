@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Deutsch Lernen</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f13;
+    --card: #1a1a24;
+    --card2: #22222f;
+    --accent: #e8c87d;
+    --accent2: #7db8e8;
+    --red: #e87d7d;
+    --green: #7de8a8;
+    --text: #f0ede6;
+    --muted: #888899;
+    --border: #2a2a3a;
+    --swipe-up: #e87d7d;
+    --swipe-down: #7de8a8;
+    --swipe-left: #7db8e8;
+    --swipe-right: #e8c87d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; }
+
+  #app { height: 100vh; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+
+  /* HEADER */
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px 10px;
+    background: var(--bg);
+    z-index: 10;
+    flex-shrink: 0;
+  }
+  .header-title { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--accent); letter-spacing: 0.5px; }
+  .header-subtitle { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .stats-row { display: flex; gap: 10px; }
+  .stat-badge {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 4px 10px;
+    font-size: 11px; color: var(--muted);
+    display: flex; align-items: center; gap: 4px;
+  }
+  .stat-badge span { color: var(--text); font-weight: 500; }
+  .menu-btn {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 8px 14px;
+    color: var(--accent); font-size: 13px; font-family: 'DM Sans', sans-serif;
+    cursor: pointer; font-weight: 500;
+  }
+
+  /* PROGRESS BAR */
+  .progress-bar-wrap { padding: 0 20px 8px; flex-shrink: 0; }
+  .progress-bar-bg { background: var(--card); border-radius: 4px; height: 3px; }
+  .progress-bar-fill { background: var(--accent); height: 3px; border-radius: 4px; transition: width 0.4s ease; }
+
+  /* SWIPE HINTS */
+  .swipe-hints {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+    padding: 0 20px 8px; flex-shrink: 0;
+  }
+  .hint {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 5px 10px;
+    font-size: 10px; color: var(--muted);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .hint-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+  /* CARD AREA */
+  .card-area {
+    flex: 1; position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 16px;
+  }
+
+  /* SWIPE OVERLAYS */
+  .swipe-overlay {
+    position: absolute; inset: 0; border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; font-weight: 700; opacity: 0;
+    transition: opacity 0.1s; pointer-events: none;
+    z-index: 5; flex-direction: column; gap: 8px;
+  }
+  .overlay-label { font-size: 14px; font-family: 'DM Sans', sans-serif; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; }
+
+  /* FLASHCARD */
+  .flashcard {
+    width: 100%; max-width: 400px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px 24px;
+    position: relative;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+    transition: box-shadow 0.2s;
+    will-change: transform;
+    min-height: 320px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .flashcard:active { cursor: grabbing; }
+
+  .card-number { font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+  .card-type-badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 12px;
+  }
+  .type-noun { background: rgba(125,184,232,0.15); color: var(--accent2); border: 1px solid rgba(125,184,232,0.3); }
+  .type-verb { background: rgba(232,200,125,0.15); color: var(--accent); border: 1px solid rgba(232,200,125,0.3); }
+  .type-adj { background: rgba(125,232,168,0.15); color: var(--green); border: 1px solid rgba(125,232,168,0.3); }
+  .type-other { background: rgba(232,125,125,0.15); color: var(--red); border: 1px solid rgba(232,125,125,0.3); }
+
+  .german-word {
+    font-family: 'Playfair Display', serif;
+    font-size: 42px; font-weight: 700;
+    color: var(--text); line-height: 1.1;
+    margin-bottom: 6px;
+  }
+  .gender-tag { font-size: 14px; color: var(--accent); font-family: 'DM Sans', sans-serif; font-weight: 400; margin-bottom: 20px; }
+
+  .meaning-reveal {
+    background: var(--card2); border-radius: 12px;
+    padding: 14px 16px; margin-bottom: 16px;
+    border-left: 3px solid var(--accent2);
+    display: none;
+  }
+  .meaning-reveal.show { display: block; }
+  .meaning-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .meaning-text { font-size: 20px; color: var(--accent2); font-weight: 500; }
+
+  .sentence-section { margin-top: auto; }
+  .sentence-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .german-sentence { font-size: 14px; color: var(--text); line-height: 1.6; font-style: italic; margin-bottom: 6px; }
+  .english-sentence { font-size: 13px; color: var(--muted); line-height: 1.5; display: none; }
+  .english-sentence.show { display: block; }
+
+  /* NO MORE CARDS */
+  .empty-state {
+    text-align: center; padding: 40px 20px;
+    display: none; flex-direction: column; align-items: center; gap: 16px;
+  }
+  .empty-state.show { display: flex; }
+  .empty-icon { font-size: 56px; }
+  .empty-title { font-family: 'Playfair Display', serif; font-size: 24px; color: var(--accent); }
+  .empty-sub { font-size: 14px; color: var(--muted); line-height: 1.6; max-width: 280px; }
+  .action-btn {
+    background: var(--accent); color: var(--bg);
+    border: none; border-radius: 12px;
+    padding: 12px 28px; font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: opacity 0.2s;
+  }
+  .action-btn:active { opacity: 0.8; }
+  .action-btn.secondary {
+    background: var(--card); color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  /* MENU OVERLAY */
+  .menu-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    z-index: 50; display: none; align-items: flex-end;
+  }
+  .menu-overlay.show { display: flex; }
+  .menu-sheet {
+    width: 100%; background: var(--card);
+    border-radius: 24px 24px 0 0;
+    padding: 20px 20px 36px;
+    border-top: 1px solid var(--border);
+  }
+  .menu-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 20px; }
+  .menu-title { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--accent); margin-bottom: 16px; }
+  .menu-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 0; border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .menu-item:last-child { border-bottom: none; }
+  .menu-icon { font-size: 22px; width: 32px; text-align: center; }
+  .menu-item-title { font-size: 15px; font-weight: 500; }
+  .menu-item-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .menu-count { margin-left: auto; background: var(--card2); border-radius: 20px; padding: 3px 10px; font-size: 12px; color: var(--accent); }
+
+  /* TEST MODE */
+  .test-screen {
+    position: fixed; inset: 0; background: var(--bg);
+    z-index: 60; display: none; flex-direction: column;
+    padding: 0;
+  }
+  .test-screen.show { display: flex; }
+  .test-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px; border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .test-title { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--accent); }
+  .close-btn {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 7px 14px;
+    color: var(--muted); font-size: 13px; cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .test-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+  .test-question {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 20px;
+  }
+  .test-q-word { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--text); margin-bottom: 6px; }
+  .test-q-sentence { font-size: 13px; color: var(--muted); font-style: italic; margin-bottom: 16px; line-height: 1.5; }
+  .test-options { display: flex; flex-direction: column; gap: 8px; }
+  .test-option {
+    background: var(--card2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 16px;
+    font-size: 14px; cursor: pointer;
+    transition: all 0.2s; text-align: left;
+    color: var(--text); font-family: 'DM Sans', sans-serif;
+  }
+  .test-option.correct { background: rgba(125,232,168,0.2); border-color: var(--green); color: var(--green); }
+  .test-option.wrong { background: rgba(232,125,125,0.2); border-color: var(--red); color: var(--red); }
+  .test-score-bar {
+    background: var(--card); border-radius: 12px; padding: 14px 16px;
+    display: flex; justify-content: space-between; align-items: center;
+    border: 1px solid var(--border); flex-shrink: 0;
+    margin: 0 20px 20px;
+  }
+  .score-label { font-size: 12px; color: var(--muted); }
+  .score-value { font-size: 20px; font-weight: 700; color: var(--accent); font-family: 'Playfair Display', serif; }
+
+  /* LEARNED LIST */
+  .learned-screen {
+    position: fixed; inset: 0; background: var(--bg);
+    z-index: 60; display: none; flex-direction: column;
+  }
+  .learned-screen.show { display: flex; }
+  .learned-list { flex: 1; overflow-y: auto; padding: 12px 20px; }
+  .learned-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0; border-bottom: 1px solid var(--border);
+  }
+  .learned-word { font-family: 'Playfair Display', serif; font-size: 18px; }
+  .learned-meaning { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .learned-badge { font-size: 10px; color: var(--green); background: rgba(125,232,168,0.1); border: 1px solid rgba(125,232,168,0.3); border-radius: 20px; padding: 2px 8px; }
+
+  /* ANIMATIONS */
+  @keyframes cardIn {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .card-animate { animation: cardIn 0.3s ease; }
+
+  @keyframes flyUp { to { transform: translateY(-120vh) rotate(-5deg); opacity: 0; } }
+  @keyframes flyDown { to { transform: translateY(120vh) rotate(5deg); opacity: 0; } }
+  @keyframes flyLeft { to { transform: translateX(-120vw) rotate(-10deg); opacity: 0; } }
+  @keyframes flyRight { to { transform: translateX(120vw) rotate(10deg); opacity: 0; } }
+  .fly-up { animation: flyUp 0.35s ease forwards; }
+  .fly-down { animation: flyDown 0.35s ease forwards; }
+  .fly-left { animation: flyLeft 0.35s ease forwards; }
+  .fly-right { animation: flyRight 0.35s ease forwards; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <div>
+      <div class="header-title">Deutsch Lernen</div>
+      <div class="header-subtitle">Top 1000 German Words</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <div class="stats-row">
+        <div class="stat-badge">✓ <span id="learnedCount">0</span></div>
+        <div class="stat-badge">✕ <span id="removedCount">0</span></div>
+      </div>
+      <button class="menu-btn" onclick="showMenu()">☰ Menu</button>
+    </div>
+  </div>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+
+  <div class="swipe-hints">
+    <div class="hint"><div class="hint-dot" style="background:var(--swipe-up)"></div>Swipe UP → Remove word</div>
+    <div class="hint"><div class="hint-dot" style="background:var(--swipe-down)"></div>Swipe DOWN → Mark learned</div>
+    <div class="hint"><div class="hint-dot" style="background:var(--swipe-left)"></div>Swipe LEFT → Show meaning</div>
+    <div class="hint"><div class="hint-dot" style="background:var(--swipe-right)"></div>Swipe RIGHT → Keep word</div>
+  </div>
+
+  <div class="card-area" id="cardArea">
+    <div class="flashcard" id="flashcard">
+      <div>
+        <div class="card-number" id="cardNumber">Word 1 of 1000</div>
+        <div id="cardTypeBadge" class="card-type-badge type-noun">noun</div>
+        <div class="german-word" id="germanWord">der Mann</div>
+        <div class="gender-tag" id="genderTag"></div>
+        <div class="meaning-reveal" id="meaningReveal">
+          <div class="meaning-label">Meaning</div>
+          <div class="meaning-text" id="meaningText">the man</div>
+        </div>
+      </div>
+      <div class="sentence-section">
+        <div class="sentence-label">Example Sentence</div>
+        <div class="german-sentence" id="germanSentence">Der Mann geht in die Stadt.</div>
+        <div class="english-sentence" id="englishSentence">The man goes to the city.</div>
+      </div>
+      <!-- Swipe Overlays -->
+      <div class="swipe-overlay" id="overlayUp" style="background:rgba(232,125,125,0.15);color:var(--swipe-up)">
+        <div style="font-size:36px">✕</div><div class="overlay-label">Remove</div>
+      </div>
+      <div class="swipe-overlay" id="overlayDown" style="background:rgba(125,232,168,0.15);color:var(--swipe-down)">
+        <div style="font-size:36px">✓</div><div class="overlay-label">Learned</div>
+      </div>
+      <div class="swipe-overlay" id="overlayLeft" style="background:rgba(125,184,232,0.15);color:var(--swipe-left)">
+        <div style="font-size:36px">👁</div><div class="overlay-label">Meaning</div>
+      </div>
+      <div class="swipe-overlay" id="overlayRight" style="background:rgba(232,200,125,0.15);color:var(--swipe-right)">
+        <div style="font-size:36px">→</div><div class="overlay-label">Keep</div>
+      </div>
+    </div>
+
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">🎉</div>
+      <div class="empty-title">All Done!</div>
+      <div class="empty-sub">You've gone through all available words. Review your learned words or restart the deck.</div>
+      <button class="action-btn" onclick="restartDeck()">Restart Deck</button>
+      <button class="action-btn secondary" onclick="showLearnedList()">View Learned Words</button>
+    </div>
+  </div>
+</div>
+
+<!-- MENU -->
+<div class="menu-overlay" id="menuOverlay" onclick="hideMenu(event)">
+  <div class="menu-sheet">
+    <div class="menu-handle"></div>
+    <div class="menu-title">Menu</div>
+    <div class="menu-item" onclick="showLearnedList()">
+      <div class="menu-icon">📚</div>
+      <div><div class="menu-item-title">Learned Words</div><div class="menu-item-sub">Words you've marked as learned</div></div>
+      <div class="menu-count" id="menuLearnedCount">0</div>
+    </div>
+    <div class="menu-item" onclick="startTest()">
+      <div class="menu-icon">🧪</div>
+      <div><div class="menu-item-title">Test Knowledge</div><div class="menu-item-sub">Quiz yourself on learned words</div></div>
+    </div>
+    <div class="menu-item" onclick="restartDeck(); hideMenu();">
+      <div class="menu-icon">🔄</div>
+      <div><div class="menu-item-title">Restart Deck</div><div class="menu-item-sub">Reset all cards (keeps learned list)</div></div>
+    </div>
+    <div class="menu-item" onclick="resetAll(); hideMenu();">
+      <div class="menu-icon">🗑️</div>
+      <div><div class="menu-item-title">Reset Everything</div><div class="menu-item-sub">Clear all progress and start fresh</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TEST SCREEN -->
+<div class="test-screen" id="testScreen">
+  <div class="test-header">
+    <div class="test-title">Knowledge Test</div>
+    <button class="close-btn" onclick="closeTest()">✕ Close</button>
+  </div>
+  <div class="test-score-bar">
+    <div><div class="score-label">Score</div><div class="score-value" id="testScore">0 / 0</div></div>
+    <div><div class="score-label">Progress</div><div class="score-value" id="testProgress">0%</div></div>
+    <button class="action-btn" onclick="startTest()" style="padding:8px 16px;font-size:12px;">Restart</button>
+  </div>
+  <div class="test-body" id="testBody"></div>
+</div>
+
+<!-- LEARNED LIST SCREEN -->
+<div class="learned-screen" id="learnedScreen">
+  <div class="test-header">
+    <div class="test-title">Learned Words</div>
+    <button class="close-btn" onclick="closeLearnedList()">✕ Close</button>
+  </div>
+  <div class="learned-list" id="learnedList"></div>
+</div>
+
+<script>
+// ===================== WORD DATA =====================
+// 1000 most frequent German words ordered by frequency
+const ALL_WORDS = [
+  // TIER 1: Top 100 - Core function words & most common vocabulary
+  {w:"sein",g:"",t:"verb",m:"to be",s:"Das kann nicht sein.",e:"That cannot be."},
+  {w:"haben",g:"",t:"verb",m:"to have",s:"Ich habe keine Zeit.",e:"I have no time."},
+  {w:"werden",g:"",t:"verb",m:"to become/will",s:"Es wird kalt.",e:"It is getting cold."},
+  {w:"können",g:"",t:"verb",m:"can/to be able to",s:"Ich kann das machen.",e:"I can do that."},
+  {w:"müssen",g:"",t:"verb",m:"must/to have to",s:"Du musst schlafen.",e:"You must sleep."},
+  {w:"sagen",g:"",t:"verb",m:"to say",s:"Was sagst du?",e:"What are you saying?"},
+  {w:"machen",g:"",t:"verb",m:"to make/do",s:"Was machst du heute?",e:"What are you doing today?"},
+  {w:"gehen",g:"",t:"verb",m:"to go",s:"Ich gehe nach Hause.",e:"I am going home."},
+  {w:"sehen",g:"",t:"verb",m:"to see",s:"Ich sehe dich.",e:"I see you."},
+  {w:"kommen",g:"",t:"verb",m:"to come",s:"Er kommt morgen.",e:"He is coming tomorrow."},
+  {w:"wollen",g:"",t:"verb",m:"to want",s:"Ich will mehr lernen.",e:"I want to learn more."},
+  {w:"geben",g:"",t:"verb",m:"to give",s:"Gib mir das Buch.",e:"Give me the book."},
+  {w:"wissen",g:"",t:"verb",m:"to know",s:"Ich weiß es nicht.",e:"I don't know it."},
+  {w:"lassen",g:"",t:"verb",m:"to let/leave",s:"Lass mich in Ruhe.",e:"Leave me alone."},
+  {w:"stehen",g:"",t:"verb",m:"to stand",s:"Er steht an der Tür.",e:"He stands at the door."},
+  {w:"finden",g:"",t:"verb",m:"to find",s:"Ich finde es gut.",e:"I find it good."},
+  {w:"bleiben",g:"",t:"verb",m:"to stay/remain",s:"Bleib hier!",e:"Stay here!"},
+  {w:"liegen",g:"",t:"verb",m:"to lie/be located",s:"Das Buch liegt auf dem Tisch.",e:"The book lies on the table."},
+  {w:"heißen",g:"",t:"verb",m:"to be called",s:"Wie heißen Sie?",e:"What is your name?"},
+  {w:"denken",g:"",t:"verb",m:"to think",s:"Ich denke an dich.",e:"I think of you."},
+  {w:"nehmen",g:"",t:"verb",m:"to take",s:"Nimmst du den Bus?",e:"Are you taking the bus?"},
+  {w:"dürfen",g:"",t:"verb",m:"may/to be allowed",s:"Darf ich reinkommen?",e:"May I come in?"},
+  {w:"glauben",g:"",t:"verb",m:"to believe",s:"Ich glaube dir.",e:"I believe you."},
+  {w:"halten",g:"",t:"verb",m:"to hold/stop",s:"Halt die Tür auf.",e:"Hold the door open."},
+  {w:"nennen",g:"",t:"verb",m:"to name/call",s:"Man nennt es Liebe.",e:"They call it love."},
+  {w:"sollen",g:"",t:"verb",m:"should/to be supposed to",s:"Du sollst nicht lügen.",e:"You shall not lie."},
+  {w:"mögen",g:"",t:"verb",m:"to like",s:"Ich mag Kaffee.",e:"I like coffee."},
+  {w:"zeigen",g:"",t:"verb",m:"to show",s:"Zeig mir den Weg.",e:"Show me the way."},
+  {w:"führen",g:"",t:"verb",m:"to lead",s:"Er führt das Team.",e:"He leads the team."},
+  {w:"sprechen",g:"",t:"verb",m:"to speak",s:"Sprechen Sie Deutsch?",e:"Do you speak German?"},
+  {w:"bringen",g:"",t:"verb",m:"to bring",s:"Bring mir Wasser.",e:"Bring me water."},
+  {w:"leben",g:"",t:"verb",m:"to live",s:"Ich lebe in Deutschland.",e:"I live in Germany."},
+  {w:"fahren",g:"",t:"verb",m:"to drive/travel",s:"Ich fahre zur Arbeit.",e:"I drive to work."},
+  {w:"meinen",g:"",t:"verb",m:"to mean/think",s:"Was meinst du damit?",e:"What do you mean by that?"},
+  {w:"fragen",g:"",t:"verb",m:"to ask",s:"Darf ich fragen?",e:"May I ask?"},
+  {w:"kennen",g:"",t:"verb",m:"to know (person)",s:"Ich kenne ihn gut.",e:"I know him well."},
+  {w:"laufen",g:"",t:"verb",m:"to run/walk",s:"Sie läuft jeden Tag.",e:"She runs every day."},
+  {w:"schreiben",g:"",t:"verb",m:"to write",s:"Er schreibt einen Brief.",e:"He writes a letter."},
+  {w:"lesen",g:"",t:"verb",m:"to read",s:"Ich lese gerne Bücher.",e:"I like to read books."},
+  {w:"spielen",g:"",t:"verb",m:"to play",s:"Die Kinder spielen draußen.",e:"The children play outside."},
+  {w:"brauchen",g:"",t:"verb",m:"to need",s:"Ich brauche Hilfe.",e:"I need help."},
+  {w:"arbeiten",g:"",t:"verb",m:"to work",s:"Sie arbeitet sehr hart.",e:"She works very hard."},
+  {w:"kaufen",g:"",t:"verb",m:"to buy",s:"Ich kaufe ein neues Auto.",e:"I am buying a new car."},
+  {w:"öffnen",g:"",t:"verb",m:"to open",s:"Öffne bitte das Fenster.",e:"Please open the window."},
+  {w:"hören",g:"",t:"verb",m:"to hear/listen",s:"Ich höre Musik.",e:"I am listening to music."},
+  {w:"erklären",g:"",t:"verb",m:"to explain",s:"Kannst du das erklären?",e:"Can you explain that?"},
+  {w:"lernen",g:"",t:"verb",m:"to learn",s:"Ich lerne Deutsch.",e:"I am learning German."},
+  {w:"verstehen",g:"",t:"verb",m:"to understand",s:"Ich verstehe dich nicht.",e:"I don't understand you."},
+  {w:"helfen",g:"",t:"verb",m:"to help",s:"Kann ich helfen?",e:"Can I help?"},
+  {w:"versuchen",g:"",t:"verb",m:"to try",s:"Ich versuche es.",e:"I will try it."},
+
+  // TOP 100 NOUNS
+  {w:"der Mann",g:"der",t:"noun",m:"the man",s:"Der Mann liest die Zeitung.",e:"The man reads the newspaper."},
+  {w:"die Frau",g:"die",t:"noun",m:"the woman/wife",s:"Die Frau kauft Blumen.",e:"The woman buys flowers."},
+  {w:"das Kind",g:"das",t:"noun",m:"the child",s:"Das Kind spielt im Park.",e:"The child plays in the park."},
+  {w:"die Zeit",g:"die",t:"noun",m:"the time",s:"Die Zeit vergeht schnell.",e:"Time passes quickly."},
+  {w:"das Jahr",g:"das",t:"noun",m:"the year",s:"Das Jahr hat 365 Tage.",e:"The year has 365 days."},
+  {w:"der Tag",g:"der",t:"noun",m:"the day",s:"Guten Tag!",e:"Good day!"},
+  {w:"das Haus",g:"das",t:"noun",m:"the house",s:"Das Haus ist sehr groß.",e:"The house is very large."},
+  {w:"die Hand",g:"die",t:"noun",m:"the hand",s:"Gib mir die Hand.",e:"Give me your hand."},
+  {w:"die Stadt",g:"die",t:"noun",m:"the city/town",s:"Berlin ist eine große Stadt.",e:"Berlin is a big city."},
+  {w:"der Mensch",g:"der",t:"noun",m:"the person/human",s:"Jeder Mensch ist einzigartig.",e:"Every person is unique."},
+  {w:"das Land",g:"das",t:"noun",m:"the country/land",s:"Deutschland ist ein schönes Land.",e:"Germany is a beautiful country."},
+  {w:"die Welt",g:"die",t:"noun",m:"the world",s:"Die Welt ist groß.",e:"The world is big."},
+  {w:"das Leben",g:"das",t:"noun",m:"the life",s:"Das Leben ist schön.",e:"Life is beautiful."},
+  {w:"die Arbeit",g:"die",t:"noun",m:"the work/job",s:"Die Arbeit macht Spaß.",e:"The work is fun."},
+  {w:"das Wasser",g:"das",t:"noun",m:"the water",s:"Ich trinke viel Wasser.",e:"I drink a lot of water."},
+  {w:"der Weg",g:"der",t:"noun",m:"the way/path",s:"Der Weg ist lang.",e:"The path is long."},
+  {w:"die Nacht",g:"die",t:"noun",m:"the night",s:"Die Nacht ist dunkel.",e:"The night is dark."},
+  {w:"das Auge",g:"das",t:"noun",m:"the eye",s:"Deine Augen sind schön.",e:"Your eyes are beautiful."},
+  {w:"die Mutter",g:"die",t:"noun",m:"the mother",s:"Meine Mutter kocht gut.",e:"My mother cooks well."},
+  {w:"der Vater",g:"der",t:"noun",m:"the father",s:"Mein Vater arbeitet viel.",e:"My father works a lot."},
+  {w:"das Geld",g:"das",t:"noun",m:"the money",s:"Ich habe kein Geld.",e:"I have no money."},
+  {w:"die Schule",g:"die",t:"noun",m:"the school",s:"Ich gehe in die Schule.",e:"I go to school."},
+  {w:"der Freund",g:"der",t:"noun",m:"the friend/boyfriend",s:"Er ist mein bester Freund.",e:"He is my best friend."},
+  {w:"die Freundin",g:"die",t:"noun",m:"the friend/girlfriend",s:"Sie ist meine Freundin.",e:"She is my friend."},
+  {w:"der Name",g:"der",t:"noun",m:"the name",s:"Wie ist dein Name?",e:"What is your name?"},
+  {w:"die Frage",g:"die",t:"noun",m:"the question",s:"Das ist eine gute Frage.",e:"That is a good question."},
+  {w:"das Problem",g:"das",t:"noun",m:"the problem",s:"Das ist kein Problem.",e:"That is no problem."},
+  {w:"das Buch",g:"das",t:"noun",m:"the book",s:"Ich lese ein gutes Buch.",e:"I am reading a good book."},
+  {w:"der Abend",g:"der",t:"noun",m:"the evening",s:"Guten Abend!",e:"Good evening!"},
+  {w:"die Stunde",g:"die",t:"noun",m:"the hour",s:"Ich warte seit einer Stunde.",e:"I have been waiting for an hour."},
+  {w:"das Wort",g:"das",t:"noun",m:"the word",s:"Ich lerne jeden Tag neue Wörter.",e:"I learn new words every day."},
+  {w:"der Morgen",g:"der",t:"noun",m:"the morning",s:"Guten Morgen!",e:"Good morning!"},
+  {w:"das Auto",g:"das",t:"noun",m:"the car",s:"Das Auto ist neu.",e:"The car is new."},
+  {w:"die Straße",g:"die",t:"noun",m:"the street/road",s:"Die Straße ist breit.",e:"The street is wide."},
+  {w:"der Kopf",g:"der",t:"noun",m:"the head",s:"Mein Kopf tut weh.",e:"My head hurts."},
+  {w:"das Brot",g:"das",t:"noun",m:"the bread",s:"Ich esse Brot zum Frühstück.",e:"I eat bread for breakfast."},
+  {w:"der Tisch",g:"der",t:"noun",m:"the table",s:"Das Buch liegt auf dem Tisch.",e:"The book is on the table."},
+  {w:"das Fenster",g:"das",t:"noun",m:"the window",s:"Bitte schließ das Fenster.",e:"Please close the window."},
+  {w:"die Tür",g:"die",t:"noun",m:"the door",s:"Bitte mach die Tür zu.",e:"Please close the door."},
+  {w:"das Zimmer",g:"das",t:"noun",m:"the room",s:"Das Zimmer ist ordentlich.",e:"The room is tidy."},
+  {w:"der Bruder",g:"der",t:"noun",m:"the brother",s:"Mein Bruder ist älter.",e:"My brother is older."},
+  {w:"die Schwester",g:"die",t:"noun",m:"the sister",s:"Meine Schwester wohnt in München.",e:"My sister lives in Munich."},
+  {w:"die Familie",g:"die",t:"noun",m:"the family",s:"Meine Familie ist wichtig.",e:"My family is important."},
+  {w:"die Sprache",g:"die",t:"noun",m:"the language",s:"Deutsch ist eine schöne Sprache.",e:"German is a beautiful language."},
+  {w:"der Zug",g:"der",t:"noun",m:"the train",s:"Der Zug fährt pünktlich.",e:"The train runs on time."},
+  {w:"die Musik",g:"die",t:"noun",m:"the music",s:"Ich höre gern Musik.",e:"I like listening to music."},
+  {w:"das Essen",g:"das",t:"noun",m:"the food/meal",s:"Das Essen schmeckt gut.",e:"The food tastes good."},
+  {w:"der Kaffee",g:"der",t:"noun",m:"the coffee",s:"Möchtest du Kaffee?",e:"Would you like coffee?"},
+  {w:"das Telefon",g:"das",t:"noun",m:"the telephone",s:"Mein Telefon klingelt.",e:"My phone is ringing."},
+  {w:"das Internet",g:"das",t:"noun",m:"the internet",s:"Das Internet ist überall.",e:"The internet is everywhere."},
+
+  // TIER 2: 101-300 Common adjectives & more vocabulary
+  {w:"gut",g:"",t:"adjective",m:"good",s:"Das ist eine gute Idee.",e:"That is a good idea."},
+  {w:"neu",g:"",t:"adjective",m:"new",s:"Ich habe ein neues Handy.",e:"I have a new phone."},
+  {w:"alt",g:"",t:"adjective",m:"old",s:"Das ist ein altes Gebäude.",e:"That is an old building."},
+  {w:"groß",g:"",t:"adjective",m:"big/tall",s:"Das Haus ist sehr groß.",e:"The house is very big."},
+  {w:"klein",g:"",t:"adjective",m:"small/short",s:"Das Kind ist noch klein.",e:"The child is still small."},
+  {w:"lang",g:"",t:"adjective",m:"long",s:"Der Film ist sehr lang.",e:"The movie is very long."},
+  {w:"schön",g:"",t:"adjective",m:"beautiful/nice",s:"Das Wetter ist schön heute.",e:"The weather is nice today."},
+  {w:"schnell",g:"",t:"adjective",m:"fast/quick",s:"Das Auto fährt sehr schnell.",e:"The car drives very fast."},
+  {w:"erste",g:"",t:"adjective",m:"first",s:"Das ist das erste Mal.",e:"That is the first time."},
+  {w:"letzte",g:"",t:"adjective",m:"last",s:"Das war das letzte Mal.",e:"That was the last time."},
+  {w:"jung",g:"",t:"adjective",m:"young",s:"Sie ist noch sehr jung.",e:"She is still very young."},
+  {w:"richtig",g:"",t:"adjective",m:"right/correct",s:"Das ist die richtige Antwort.",e:"That is the correct answer."},
+  {w:"wichtig",g:"",t:"adjective",m:"important",s:"Das ist sehr wichtig.",e:"That is very important."},
+  {w:"möglich",g:"",t:"adjective",m:"possible",s:"Ist das möglich?",e:"Is that possible?"},
+  {w:"einfach",g:"",t:"adjective",m:"simple/easy",s:"Das ist ganz einfach.",e:"That is quite simple."},
+  {w:"schwer",g:"",t:"adjective",m:"heavy/difficult",s:"Diese Aufgabe ist schwer.",e:"This task is difficult."},
+  {w:"weit",g:"",t:"adjective",m:"far/wide",s:"Die Schule ist weit weg.",e:"The school is far away."},
+  {w:"offen",g:"",t:"adjective",m:"open",s:"Das Geschäft ist offen.",e:"The shop is open."},
+  {w:"sicher",g:"",t:"adjective",m:"safe/certain",s:"Bist du sicher?",e:"Are you certain?"},
+  {w:"stark",g:"",t:"adjective",m:"strong",s:"Er ist sehr stark.",e:"He is very strong."},
+  {w:"frei",g:"",t:"adjective",m:"free",s:"Sind Sie frei am Freitag?",e:"Are you free on Friday?"},
+  {w:"klar",g:"",t:"adjective",m:"clear",s:"Das ist klar.",e:"That is clear."},
+  {w:"hell",g:"",t:"adjective",m:"bright/light",s:"Das Zimmer ist sehr hell.",e:"The room is very bright."},
+  {w:"dunkel",g:"",t:"adjective",m:"dark",s:"Es wird dunkel.",e:"It is getting dark."},
+  {w:"hoch",g:"",t:"adjective",m:"high/tall",s:"Der Berg ist sehr hoch.",e:"The mountain is very high."},
+  {w:"tief",g:"",t:"adjective",m:"deep/low",s:"Das Wasser ist sehr tief.",e:"The water is very deep."},
+  {w:"früh",g:"",t:"adjective",m:"early",s:"Ich stehe früh auf.",e:"I wake up early."},
+  {w:"spät",g:"",t:"adjective",m:"late",s:"Es ist schon spät.",e:"It is already late."},
+  {w:"warm",g:"",t:"adjective",m:"warm",s:"Das Wasser ist warm.",e:"The water is warm."},
+  {w:"kalt",g:"",t:"adjective",m:"cold",s:"Es ist heute kalt.",e:"It is cold today."},
+  {w:"voll",g:"",t:"adjective",m:"full",s:"Das Glas ist voll.",e:"The glass is full."},
+  {w:"leer",g:"",t:"adjective",m:"empty",s:"Die Straße ist leer.",e:"The street is empty."},
+  {w:"kurz",g:"",t:"adjective",m:"short/brief",s:"Mach es kurz.",e:"Keep it brief."},
+  {w:"breit",g:"",t:"adjective",m:"wide/broad",s:"Die Straße ist sehr breit.",e:"The street is very wide."},
+  {w:"nah",g:"",t:"adjective",m:"near/close",s:"Der Bahnhof ist nah.",e:"The station is near."},
+  {w:"falsch",g:"",t:"adjective",m:"wrong/false",s:"Das ist falsch.",e:"That is wrong."},
+  {w:"gleich",g:"",t:"adjective",m:"same/equal",s:"Wir sind alle gleich.",e:"We are all equal."},
+  {w:"anders",g:"",t:"adjective",m:"different/other",s:"Das ist anders.",e:"That is different."},
+  {w:"schlechte",g:"",t:"adjective",m:"bad",s:"Das Wetter ist schlecht.",e:"The weather is bad."},
+  {w:"nett",g:"",t:"adjective",m:"nice/kind",s:"Sie ist sehr nett.",e:"She is very nice."},
+  {w:"schwach",g:"",t:"adjective",m:"weak",s:"Er fühlt sich schwach.",e:"He feels weak."},
+  {w:"teuer",g:"",t:"adjective",m:"expensive",s:"Das ist zu teuer.",e:"That is too expensive."},
+  {w:"billig",g:"",t:"adjective",m:"cheap",s:"Das Essen ist billig.",e:"The food is cheap."},
+  {w:"fertig",g:"",t:"adjective",m:"ready/done",s:"Ich bin fertig.",e:"I am done."},
+  {w:"müde",g:"",t:"adjective",m:"tired",s:"Ich bin sehr müde.",e:"I am very tired."},
+  {w:"krank",g:"",t:"adjective",m:"sick/ill",s:"Er ist krank.",e:"He is sick."},
+  {w:"gesund",g:"",t:"adjective",m:"healthy",s:"Bleib gesund!",e:"Stay healthy!"},
+  {w:"hungrig",g:"",t:"adjective",m:"hungry",s:"Ich bin hungrig.",e:"I am hungry."},
+  {w:"glücklich",g:"",t:"adjective",m:"happy",s:"Ich bin glücklich.",e:"I am happy."},
+  {w:"traurig",g:"",t:"adjective",m:"sad",s:"Er ist traurig.",e:"He is sad."},
+
+  // More nouns - Tier 2
+  {w:"die Antwort",g:"die",t:"noun",m:"the answer",s:"Das ist die richtige Antwort.",e:"That is the correct answer."},
+  {w:"der Platz",g:"der",t:"noun",m:"the place/seat/square",s:"Ist dieser Platz frei?",e:"Is this seat free?"},
+  {w:"das Mal",g:"das",t:"noun",m:"the time (occurrence)",s:"Zum ersten Mal in Berlin.",e:"For the first time in Berlin."},
+  {w:"die Nummer",g:"die",t:"noun",m:"the number",s:"Wie ist deine Nummer?",e:"What is your number?"},
+  {w:"die Art",g:"die",t:"noun",m:"the kind/type/way",s:"Das ist eine andere Art.",e:"That is a different kind."},
+  {w:"das Bild",g:"das",t:"noun",m:"the picture/image",s:"Das Bild ist schön.",e:"The picture is beautiful."},
+  {w:"der Abschnitt",g:"der",t:"noun",m:"the section/paragraph",s:"Lies den ersten Abschnitt.",e:"Read the first section."},
+  {w:"die Seite",g:"die",t:"noun",m:"the side/page",s:"Lies Seite zehn.",e:"Read page ten."},
+  {w:"der Punkt",g:"der",t:"noun",m:"the point/dot",s:"Das ist ein wichtiger Punkt.",e:"That is an important point."},
+  {w:"die Möglichkeit",g:"die",t:"noun",m:"the possibility",s:"Es gibt viele Möglichkeiten.",e:"There are many possibilities."},
+  {w:"die Erfahrung",g:"die",t:"noun",m:"the experience",s:"Das war eine tolle Erfahrung.",e:"That was a great experience."},
+  {w:"der Unterschied",g:"der",t:"noun",m:"the difference",s:"Was ist der Unterschied?",e:"What is the difference?"},
+  {w:"das Beispiel",g:"das",t:"noun",m:"the example",s:"Zum Beispiel Äpfel.",e:"For example, apples."},
+  {w:"der Bereich",g:"der",t:"noun",m:"the area/field/range",s:"In diesem Bereich bin ich gut.",e:"I am good in this area."},
+  {w:"das Ergebnis",g:"das",t:"noun",m:"the result",s:"Das Ergebnis ist gut.",e:"The result is good."},
+  {w:"die Stelle",g:"die",t:"noun",m:"the place/position/job",s:"Ich suche eine neue Stelle.",e:"I am looking for a new position."},
+  {w:"die Woche",g:"die",t:"noun",m:"the week",s:"Nächste Woche reise ich.",e:"I travel next week."},
+  {w:"der Monat",g:"der",t:"noun",m:"the month",s:"Im nächsten Monat heirate ich.",e:"I am getting married next month."},
+  {w:"die Mitte",g:"die",t:"noun",m:"the middle/center",s:"In der Mitte der Stadt.",e:"In the center of the city."},
+  {w:"der Anfang",g:"der",t:"noun",m:"the beginning/start",s:"Am Anfang war es schwer.",e:"At the beginning it was hard."},
+  {w:"das Ende",g:"das",t:"noun",m:"the end",s:"Am Ende hat er gewonnen.",e:"In the end he won."},
+  {w:"der Teil",g:"der",t:"noun",m:"the part",s:"Das ist ein Teil des Plans.",e:"That is part of the plan."},
+  {w:"die Zahl",g:"die",t:"noun",m:"the number/figure",s:"Die Zahl ist zu groß.",e:"The number is too large."},
+  {w:"das Recht",g:"das",t:"noun",m:"the right/law",s:"Das ist mein Recht.",e:"That is my right."},
+  {w:"der Grund",g:"der",t:"noun",m:"the reason/ground",s:"Was ist der Grund?",e:"What is the reason?"},
+  {w:"das System",g:"das",t:"noun",m:"the system",s:"Das System funktioniert gut.",e:"The system works well."},
+  {w:"die Geschichte",g:"die",t:"noun",m:"the history/story",s:"Das ist eine alte Geschichte.",e:"That is an old story."},
+  {w:"das Spiel",g:"das",t:"noun",m:"the game/play",s:"Das Spiel beginnt um drei.",e:"The game starts at three."},
+  {w:"die Reise",g:"die",t:"noun",m:"the journey/trip",s:"Die Reise war wunderschön.",e:"The journey was wonderful."},
+  {w:"das Wetter",g:"das",t:"noun",m:"the weather",s:"Das Wetter ist heute schön.",e:"The weather is nice today."},
+  {w:"die Luft",g:"die",t:"noun",m:"the air",s:"Die Luft ist frisch.",e:"The air is fresh."},
+  {w:"der Baum",g:"der",t:"noun",m:"the tree",s:"Der Baum ist sehr groß.",e:"The tree is very big."},
+  {w:"das Tier",g:"das",t:"noun",m:"the animal",s:"Das Tier schläft.",e:"The animal is sleeping."},
+  {w:"der Hund",g:"der",t:"noun",m:"the dog",s:"Der Hund bellt.",e:"The dog barks."},
+  {w:"die Katze",g:"die",t:"noun",m:"the cat",s:"Die Katze schläft auf dem Sofa.",e:"The cat sleeps on the sofa."},
+  {w:"das Glas",g:"das",t:"noun",m:"the glass",s:"Ein Glas Wasser bitte.",e:"A glass of water please."},
+  {w:"die Küche",g:"die",t:"noun",m:"the kitchen",s:"Ich koche in der Küche.",e:"I cook in the kitchen."},
+  {w:"das Bett",g:"das",t:"noun",m:"the bed",s:"Ich gehe ins Bett.",e:"I am going to bed."},
+  {w:"die Lampe",g:"die",t:"noun",m:"the lamp",s:"Mach die Lampe an.",e:"Turn on the lamp."},
+  {w:"der Stuhl",g:"der",t:"noun",m:"the chair",s:"Sitz auf dem Stuhl.",e:"Sit on the chair."},
+  {w:"das Sofa",g:"das",t:"noun",m:"the sofa",s:"Ich sitze auf dem Sofa.",e:"I am sitting on the sofa."},
+  {w:"die Wand",g:"die",t:"noun",m:"the wall",s:"Das Bild hängt an der Wand.",e:"The picture hangs on the wall."},
+  {w:"der Boden",g:"der",t:"noun",m:"the floor/ground",s:"Das Buch liegt auf dem Boden.",e:"The book is on the floor."},
+  {w:"das Dach",g:"das",t:"noun",m:"the roof",s:"Das Dach ist kaputt.",e:"The roof is broken."},
+  {w:"die Treppe",g:"die",t:"noun",m:"the stairs",s:"Ich gehe die Treppe hoch.",e:"I go up the stairs."},
+  {w:"der Garten",g:"der",t:"noun",m:"the garden",s:"Ich arbeite im Garten.",e:"I work in the garden."},
+  {w:"der Bahnhof",g:"der",t:"noun",m:"the train station",s:"Wo ist der Bahnhof?",e:"Where is the train station?"},
+  {w:"das Flugzeug",g:"das",t:"noun",m:"the airplane",s:"Das Flugzeug landet bald.",e:"The airplane lands soon."},
+  {w:"das Schiff",g:"das",t:"noun",m:"the ship",s:"Das Schiff fährt ins Meer.",e:"The ship sails into the sea."},
+  {w:"das Fahrrad",g:"das",t:"noun",m:"the bicycle",s:"Ich fahre mit dem Fahrrad.",e:"I ride by bicycle."},
+
+  // TIER 3: 301-600 more vocabulary
+  {w:"die Uhr",g:"die",t:"noun",m:"the clock/watch",s:"Wie viel Uhr ist es?",e:"What time is it?"},
+  {w:"der Arzt",g:"der",t:"noun",m:"the doctor (male)",s:"Ich muss zum Arzt.",e:"I have to go to the doctor."},
+  {w:"die Ärztin",g:"die",t:"noun",m:"the doctor (female)",s:"Die Ärztin ist nett.",e:"The doctor is nice."},
+  {w:"das Krankenhaus",g:"das",t:"noun",m:"the hospital",s:"Er liegt im Krankenhaus.",e:"He is in the hospital."},
+  {w:"die Medizin",g:"die",t:"noun",m:"the medicine",s:"Nimmst du Medizin?",e:"Are you taking medicine?"},
+  {w:"der Sport",g:"der",t:"noun",m:"the sport",s:"Ich treibe Sport.",e:"I do sports."},
+  {w:"das Fußball",g:"das",t:"noun",m:"the football/soccer",s:"Ich spiele Fußball.",e:"I play football."},
+  {w:"die Mannschaft",g:"die",t:"noun",m:"the team",s:"Unsere Mannschaft hat gewonnen.",e:"Our team won."},
+  {w:"der Lehrer",g:"der",t:"noun",m:"the teacher (male)",s:"Der Lehrer erklärt die Aufgabe.",e:"The teacher explains the task."},
+  {w:"die Lehrerin",g:"die",t:"noun",m:"the teacher (female)",s:"Die Lehrerin ist streng.",e:"The teacher is strict."},
+  {w:"der Schüler",g:"der",t:"noun",m:"the student/pupil (male)",s:"Der Schüler lernt fleißig.",e:"The pupil studies diligently."},
+  {w:"die Schülerin",g:"die",t:"noun",m:"the student/pupil (female)",s:"Die Schülerin hat gute Noten.",e:"The female student has good grades."},
+  {w:"die Universität",g:"die",t:"noun",m:"the university",s:"Ich studiere an der Universität.",e:"I study at the university."},
+  {w:"der Student",g:"der",t:"noun",m:"the student (male)",s:"Der Student lernt viel.",e:"The student studies a lot."},
+  {w:"die Note",g:"die",t:"noun",m:"the grade/note",s:"Ich habe eine gute Note.",e:"I have a good grade."},
+  {w:"der Beruf",g:"der",t:"noun",m:"the profession/job",s:"Was ist dein Beruf?",e:"What is your profession?"},
+  {w:"das Büro",g:"das",t:"noun",m:"the office",s:"Ich arbeite im Büro.",e:"I work in the office."},
+  {w:"die Besprechung",g:"die",t:"noun",m:"the meeting",s:"Ich habe eine Besprechung.",e:"I have a meeting."},
+  {w:"der Chef",g:"der",t:"noun",m:"the boss",s:"Mein Chef ist streng.",e:"My boss is strict."},
+  {w:"das Gehalt",g:"das",t:"noun",m:"the salary",s:"Das Gehalt ist gut.",e:"The salary is good."},
+  {w:"der Urlaub",g:"der",t:"noun",m:"the vacation/holiday",s:"Ich fahre im Urlaub nach Spanien.",e:"I am going to Spain on holiday."},
+  {w:"der Strand",g:"der",t:"noun",m:"the beach",s:"Wir liegen am Strand.",e:"We are lying on the beach."},
+  {w:"das Meer",g:"das",t:"noun",m:"the sea/ocean",s:"Das Meer ist ruhig.",e:"The sea is calm."},
+  {w:"der Berg",g:"der",t:"noun",m:"the mountain",s:"Der Berg ist hoch.",e:"The mountain is high."},
+  {w:"der Fluss",g:"der",t:"noun",m:"the river",s:"Der Fluss ist breit.",e:"The river is wide."},
+  {w:"der Wald",g:"der",t:"noun",m:"the forest",s:"Der Wald ist dunkel.",e:"The forest is dark."},
+  {w:"der See",g:"der",t:"noun",m:"the lake",s:"Wir schwimmen im See.",e:"We swim in the lake."},
+  {w:"die Blume",g:"die",t:"noun",m:"the flower",s:"Die Blume ist schön.",e:"The flower is beautiful."},
+  {w:"das Obst",g:"das",t:"noun",m:"the fruit",s:"Obst ist gesund.",e:"Fruit is healthy."},
+  {w:"das Gemüse",g:"das",t:"noun",m:"the vegetables",s:"Ich esse viel Gemüse.",e:"I eat a lot of vegetables."},
+  {w:"der Apfel",g:"der",t:"noun",m:"the apple",s:"Ein Apfel täglich ist gesund.",e:"An apple a day is healthy."},
+  {w:"die Banane",g:"die",t:"noun",m:"the banana",s:"Ich esse eine Banane.",e:"I eat a banana."},
+  {w:"das Fleisch",g:"das",t:"noun",m:"the meat",s:"Ich esse kein Fleisch.",e:"I don't eat meat."},
+  {w:"der Fisch",g:"der",t:"noun",m:"the fish",s:"Der Fisch ist frisch.",e:"The fish is fresh."},
+  {w:"das Ei",g:"das",t:"noun",m:"the egg",s:"Ich esse ein Ei zum Frühstück.",e:"I eat an egg for breakfast."},
+  {w:"die Milch",g:"die",t:"noun",m:"the milk",s:"Ich trinke Milch.",e:"I drink milk."},
+  {w:"der Käse",g:"der",t:"noun",m:"the cheese",s:"Magst du Käse?",e:"Do you like cheese?"},
+  {w:"die Suppe",g:"die",t:"noun",m:"the soup",s:"Die Suppe ist heiß.",e:"The soup is hot."},
+  {w:"das Restaurant",g:"das",t:"noun",m:"the restaurant",s:"Wir essen im Restaurant.",e:"We eat at the restaurant."},
+  {w:"die Rechnung",g:"die",t:"noun",m:"the bill/invoice",s:"Bitte die Rechnung!",e:"The bill please!"},
+  {w:"das Frühstück",g:"das",t:"noun",m:"the breakfast",s:"Ich esse Frühstück um acht.",e:"I eat breakfast at eight."},
+  {w:"das Mittagessen",g:"das",t:"noun",m:"the lunch",s:"Das Mittagessen ist fertig.",e:"Lunch is ready."},
+  {w:"das Abendessen",g:"das",t:"noun",m:"the dinner",s:"Wir essen Abendessen zusammen.",e:"We eat dinner together."},
+  {w:"der Supermarkt",g:"der",t:"noun",m:"the supermarket",s:"Ich gehe zum Supermarkt.",e:"I go to the supermarket."},
+  {w:"der Markt",g:"der",t:"noun",m:"the market",s:"Der Markt ist samstags offen.",e:"The market is open on Saturdays."},
+  {w:"der Laden",g:"der",t:"noun",m:"the shop/store",s:"Der Laden schließt um sechs.",e:"The shop closes at six."},
+  {w:"der Preis",g:"der",t:"noun",m:"the price",s:"Der Preis ist fair.",e:"The price is fair."},
+  {w:"die Farbe",g:"die",t:"noun",m:"the color",s:"Welche Farbe magst du?",e:"Which color do you like?"},
+  {w:"das Kleid",g:"das",t:"noun",m:"the dress",s:"Das Kleid ist hübsch.",e:"The dress is pretty."},
+  {w:"das Hemd",g:"das",t:"noun",m:"the shirt",s:"Das Hemd ist weiß.",e:"The shirt is white."},
+
+  // More verbs - Tier 3
+  {w:"anrufen",g:"",t:"verb",m:"to call (phone)",s:"Ich rufe dich morgen an.",e:"I will call you tomorrow."},
+  {w:"einladen",g:"",t:"verb",m:"to invite",s:"Ich lade dich ein.",e:"I invite you."},
+  {w:"bezahlen",g:"",t:"verb",m:"to pay",s:"Ich bezahle die Rechnung.",e:"I pay the bill."},
+  {w:"sparen",g:"",t:"verb",m:"to save (money)",s:"Ich spare Geld.",e:"I am saving money."},
+  {w:"kochen",g:"",t:"verb",m:"to cook",s:"Ich koche gerne.",e:"I like to cook."},
+  {w:"essen",g:"",t:"verb",m:"to eat",s:"Wir essen zusammen.",e:"We eat together."},
+  {w:"trinken",g:"",t:"verb",m:"to drink",s:"Was möchtest du trinken?",e:"What would you like to drink?"},
+  {w:"schlafen",g:"",t:"verb",m:"to sleep",s:"Ich schlafe acht Stunden.",e:"I sleep eight hours."},
+  {w:"aufstehen",g:"",t:"verb",m:"to get up/stand up",s:"Ich stehe um sieben auf.",e:"I get up at seven."},
+  {w:"waschen",g:"",t:"verb",m:"to wash",s:"Ich wasche meine Wäsche.",e:"I wash my laundry."},
+  {w:"putzen",g:"",t:"verb",m:"to clean",s:"Ich putze das Haus.",e:"I clean the house."},
+  {w:"reparieren",g:"",t:"verb",m:"to repair",s:"Kannst du das reparieren?",e:"Can you repair that?"},
+  {w:"planen",g:"",t:"verb",m:"to plan",s:"Wir planen die Reise.",e:"We are planning the trip."},
+  {w:"warten",g:"",t:"verb",m:"to wait",s:"Ich warte auf dich.",e:"I am waiting for you."},
+  {w:"antworten",g:"",t:"verb",m:"to answer",s:"Bitte antworte schnell.",e:"Please answer quickly."},
+  {w:"reisen",g:"",t:"verb",m:"to travel",s:"Ich reise gerne.",e:"I like to travel."},
+  {w:"besuchen",g:"",t:"verb",m:"to visit",s:"Ich besuche meine Eltern.",e:"I visit my parents."},
+  {w:"einschlafen",g:"",t:"verb",m:"to fall asleep",s:"Ich schlafe schnell ein.",e:"I fall asleep quickly."},
+  {w:"aufmachen",g:"",t:"verb",m:"to open",s:"Mach die Tür auf.",e:"Open the door."},
+  {w:"zumachen",g:"",t:"verb",m:"to close",s:"Mach das Fenster zu.",e:"Close the window."},
+  {w:"anfangen",g:"",t:"verb",m:"to begin/start",s:"Wann fangen wir an?",e:"When do we start?"},
+  {w:"aufhören",g:"",t:"verb",m:"to stop/quit",s:"Hör auf zu reden!",e:"Stop talking!"},
+  {w:"passen",g:"",t:"verb",m:"to fit/suit",s:"Das Hemd passt mir gut.",e:"The shirt fits me well."},
+  {w:"gefallen",g:"",t:"verb",m:"to please/like",s:"Das gefällt mir sehr.",e:"I like that very much."},
+  {w:"bedeuten",g:"",t:"verb",m:"to mean",s:"Was bedeutet das?",e:"What does that mean?"},
+  {w:"verbinden",g:"",t:"verb",m:"to connect/link",s:"Verbinde die Punkte.",e:"Connect the dots."},
+  {w:"entscheiden",g:"",t:"verb",m:"to decide",s:"Du musst dich entscheiden.",e:"You must decide."},
+  {w:"benutzen",g:"",t:"verb",m:"to use",s:"Benutze das Wörterbuch.",e:"Use the dictionary."},
+  {w:"suchen",g:"",t:"verb",m:"to search/look for",s:"Ich suche meine Schlüssel.",e:"I am looking for my keys."},
+  {w:"prüfen",g:"",t:"verb",m:"to check/test",s:"Ich prüfe die Antworten.",e:"I check the answers."},
+  {w:"drücken",g:"",t:"verb",m:"to press/push",s:"Drücke den Knopf.",e:"Press the button."},
+  {w:"ziehen",g:"",t:"verb",m:"to pull/move",s:"Zieh die Tür auf.",e:"Pull the door open."},
+  {w:"werfen",g:"",t:"verb",m:"to throw",s:"Wirf den Ball.",e:"Throw the ball."},
+  {w:"fangen",g:"",t:"verb",m:"to catch",s:"Fang den Ball!",e:"Catch the ball!"},
+  {w:"verlieren",g:"",t:"verb",m:"to lose",s:"Ich verliere immer meine Schlüssel.",e:"I always lose my keys."},
+  {w:"gewinnen",g:"",t:"verb",m:"to win",s:"Wir wollen gewinnen.",e:"We want to win."},
+  {w:"kämpfen",g:"",t:"verb",m:"to fight/struggle",s:"Er kämpft für seine Rechte.",e:"He fights for his rights."},
+  {w:"teilen",g:"",t:"verb",m:"to share/divide",s:"Wir teilen das Essen.",e:"We share the food."},
+  {w:"wählen",g:"",t:"verb",m:"to choose/vote/dial",s:"Ich wähle die erste Option.",e:"I choose the first option."},
+  {w:"versprechen",g:"",t:"verb",m:"to promise",s:"Ich verspreche es dir.",e:"I promise you."},
+  {w:"vergessen",g:"",t:"verb",m:"to forget",s:"Ich vergesse deinen Geburtstag nie.",e:"I never forget your birthday."},
+  {w:"erinnern",g:"",t:"verb",m:"to remember/remind",s:"Erinnere mich bitte.",e:"Please remind me."},
+  {w:"starten",g:"",t:"verb",m:"to start/launch",s:"Der Computer startet nicht.",e:"The computer won't start."},
+  {w:"stoppen",g:"",t:"verb",m:"to stop",s:"Stopp das Auto!",e:"Stop the car!"},
+  {w:"ändern",g:"",t:"verb",m:"to change",s:"Ich möchte etwas ändern.",e:"I want to change something."},
+  {w:"verbessern",g:"",t:"verb",m:"to improve",s:"Ich möchte mein Deutsch verbessern.",e:"I want to improve my German."},
+  {w:"wachsen",g:"",t:"verb",m:"to grow",s:"Die Kinder wachsen schnell.",e:"The children grow quickly."},
+  {w:"bauen",g:"",t:"verb",m:"to build",s:"Sie bauen ein Haus.",e:"They are building a house."},
+  {w:"malen",g:"",t:"verb",m:"to paint/draw",s:"Das Kind malt ein Bild.",e:"The child paints a picture."},
+  {w:"singen",g:"",t:"verb",m:"to sing",s:"Sie singt sehr schön.",e:"She sings very beautifully."},
+  {w:"tanzen",g:"",t:"verb",m:"to dance",s:"Können wir tanzen?",e:"Can we dance?"},
+
+  // TIER 3 continued - more nouns
+  {w:"der Schlüssel",g:"der",t:"noun",m:"the key",s:"Hast du meinen Schlüssel?",e:"Do you have my key?"},
+  {w:"die Tasche",g:"die",t:"noun",m:"the bag/pocket",s:"Meine Tasche ist schwer.",e:"My bag is heavy."},
+  {w:"der Rucksack",g:"der",t:"noun",m:"the backpack",s:"Ich trage einen Rucksack.",e:"I carry a backpack."},
+  {w:"die Brille",g:"die",t:"noun",m:"the glasses",s:"Ich brauche eine Brille.",e:"I need glasses."},
+  {w:"der Regenschirm",g:"der",t:"noun",m:"the umbrella",s:"Vergiss den Regenschirm nicht.",e:"Don't forget the umbrella."},
+  {w:"der Mantel",g:"der",t:"noun",m:"the coat",s:"Ich ziehe meinen Mantel an.",e:"I put on my coat."},
+  {w:"die Jacke",g:"die",t:"noun",m:"the jacket",s:"Die Jacke ist warm.",e:"The jacket is warm."},
+  {w:"der Schuh",g:"der",t:"noun",m:"the shoe",s:"Meine Schuhe sind neu.",e:"My shoes are new."},
+  {w:"die Hose",g:"die",t:"noun",m:"the trousers/pants",s:"Die Hose ist zu groß.",e:"The trousers are too big."},
+  {w:"das T-Shirt",g:"das",t:"noun",m:"the T-shirt",s:"Das T-Shirt ist bequem.",e:"The T-shirt is comfortable."},
+  {w:"der Computer",g:"der",t:"noun",m:"the computer",s:"Ich arbeite am Computer.",e:"I work on the computer."},
+  {w:"das Handy",g:"das",t:"noun",m:"the mobile phone",s:"Mein Handy ist kaputt.",e:"My mobile phone is broken."},
+  {w:"der Fernseher",g:"der",t:"noun",m:"the television",s:"Ich sehe fern.",e:"I watch television."},
+  {w:"die Kamera",g:"die",t:"noun",m:"the camera",s:"Ich mache Fotos mit der Kamera.",e:"I take photos with the camera."},
+  {w:"das Bild",g:"das",t:"noun",m:"the photo/picture",s:"Schau das Bild an.",e:"Look at the picture."},
+  {w:"die Zeitung",g:"die",t:"noun",m:"the newspaper",s:"Ich lese die Zeitung.",e:"I read the newspaper."},
+  {w:"die Zeitschrift",g:"die",t:"noun",m:"the magazine",s:"Ich lese eine Zeitschrift.",e:"I read a magazine."},
+  {w:"der Film",g:"der",t:"noun",m:"the film/movie",s:"Der Film ist sehr gut.",e:"The movie is very good."},
+  {w:"das Theater",g:"das",t:"noun",m:"the theater",s:"Wir gehen ins Theater.",e:"We are going to the theater."},
+  {w:"das Konzert",g:"das",t:"noun",m:"the concert",s:"Das Konzert beginnt um acht.",e:"The concert starts at eight."},
+  {w:"das Museum",g:"das",t:"noun",m:"the museum",s:"Wir besuchen das Museum.",e:"We visit the museum."},
+  {w:"die Ausstellung",g:"die",t:"noun",m:"the exhibition",s:"Die Ausstellung ist interessant.",e:"The exhibition is interesting."},
+  {w:"die Party",g:"die",t:"noun",m:"the party",s:"Ich gehe auf eine Party.",e:"I am going to a party."},
+  {w:"das Fest",g:"das",t:"noun",m:"the festival/celebration",s:"Das Fest beginnt morgen.",e:"The festival begins tomorrow."},
+  {w:"der Geburtstag",g:"der",t:"noun",m:"the birthday",s:"Heute ist mein Geburtstag.",e:"Today is my birthday."},
+  {w:"das Geschenk",g:"das",t:"noun",m:"the gift/present",s:"Das Geschenk ist schön.",e:"The gift is beautiful."},
+  {w:"die Hochzeit",g:"die",t:"noun",m:"the wedding",s:"Die Hochzeit war wunderschön.",e:"The wedding was wonderful."},
+  {w:"die Feier",g:"die",t:"noun",m:"the celebration",s:"Die Feier war toll.",e:"The celebration was great."},
+  {w:"der Freund",g:"der",t:"noun",m:"the friend (male)",s:"Mein Freund kommt heute.",e:"My friend is coming today."},
+  {w:"die Nachricht",g:"die",t:"noun",m:"the message/news",s:"Ich habe eine Nachricht.",e:"I have a message."},
+  {w:"die E-Mail",g:"die",t:"noun",m:"the email",s:"Ich schreibe eine E-Mail.",e:"I write an email."},
+  {w:"der Brief",g:"der",t:"noun",m:"the letter",s:"Ich schreibe einen Brief.",e:"I write a letter."},
+  {w:"das Paket",g:"das",t:"noun",m:"the package/parcel",s:"Das Paket ist angekommen.",e:"The package has arrived."},
+  {w:"die Post",g:"die",t:"noun",m:"the mail/post office",s:"Ich gehe zur Post.",e:"I go to the post office."},
+  {w:"die Bank",g:"die",t:"noun",m:"the bank",s:"Ich gehe zur Bank.",e:"I go to the bank."},
+  {w:"das Konto",g:"das",t:"noun",m:"the account",s:"Ich habe ein Konto.",e:"I have an account."},
+  {w:"die Kreditkarte",g:"die",t:"noun",m:"the credit card",s:"Akzeptieren Sie Kreditkarte?",e:"Do you accept credit card?"},
+  {w:"der Ausweis",g:"der",t:"noun",m:"the ID card",s:"Zeig mir deinen Ausweis.",e:"Show me your ID."},
+  {w:"der Pass",g:"der",t:"noun",m:"the passport",s:"Ich brauche meinen Pass.",e:"I need my passport."},
+  {w:"das Visum",g:"das",t:"noun",m:"the visa",s:"Ich brauche ein Visum.",e:"I need a visa."},
+  {w:"die Grenze",g:"die",t:"noun",m:"the border",s:"Wir überqueren die Grenze.",e:"We cross the border."},
+  {w:"der Zoll",g:"der",t:"noun",m:"the customs/toll",s:"Beim Zoll musste ich warten.",e:"I had to wait at customs."},
+  {w:"der Flughafen",g:"der",t:"noun",m:"the airport",s:"Der Flughafen ist groß.",e:"The airport is large."},
+  {w:"der Koffer",g:"der",t:"noun",m:"the suitcase",s:"Mein Koffer ist schwer.",e:"My suitcase is heavy."},
+  {w:"das Ticket",g:"das",t:"noun",m:"the ticket",s:"Ich kaufe ein Ticket.",e:"I buy a ticket."},
+  {w:"die Reservierung",g:"die",t:"noun",m:"the reservation",s:"Ich habe eine Reservierung.",e:"I have a reservation."},
+  {w:"das Hotel",g:"das",t:"noun",m:"the hotel",s:"Wir wohnen im Hotel.",e:"We stay in the hotel."},
+  {w:"das Zimmer",g:"das",t:"noun",m:"the room",s:"Das Zimmer ist sauber.",e:"The room is clean."},
+  {w:"der Aufzug",g:"der",t:"noun",m:"the elevator",s:"Der Aufzug ist kaputt.",e:"The elevator is broken."},
+  {w:"die Treppe",g:"die",t:"noun",m:"the staircase",s:"Wir nehmen die Treppe.",e:"We take the stairs."},
+
+  // TIER 4: 601-1000 Broader vocabulary
+  {w:"die Gesundheit",g:"die",t:"noun",m:"the health",s:"Gesundheit ist das Wichtigste.",e:"Health is the most important thing."},
+  {w:"die Krankheit",g:"die",t:"noun",m:"the illness/disease",s:"Die Krankheit ist ansteckend.",e:"The illness is contagious."},
+  {w:"der Schmerz",g:"der",t:"noun",m:"the pain",s:"Ich habe Schmerzen.",e:"I am in pain."},
+  {w:"die Apotheke",g:"die",t:"noun",m:"the pharmacy",s:"Wo ist die Apotheke?",e:"Where is the pharmacy?"},
+  {w:"die Tablette",g:"die",t:"noun",m:"the tablet/pill",s:"Ich nehme eine Tablette.",e:"I take a tablet."},
+  {w:"das Rezept",g:"das",t:"noun",m:"the prescription/recipe",s:"Ich brauche ein Rezept.",e:"I need a prescription."},
+  {w:"die Allergie",g:"die",t:"noun",m:"the allergy",s:"Ich habe eine Allergie.",e:"I have an allergy."},
+  {w:"das Fieber",g:"das",t:"noun",m:"the fever",s:"Ich habe Fieber.",e:"I have a fever."},
+  {w:"der Husten",g:"der",t:"noun",m:"the cough",s:"Ich habe Husten.",e:"I have a cough."},
+  {w:"der Schnupfen",g:"der",t:"noun",m:"the cold (runny nose)",s:"Ich habe Schnupfen.",e:"I have a runny nose."},
+  {w:"die Verletzung",g:"die",t:"noun",m:"the injury",s:"Die Verletzung heilt.",e:"The injury is healing."},
+  {w:"die Operation",g:"die",t:"noun",m:"the operation/surgery",s:"Die Operation war erfolgreich.",e:"The operation was successful."},
+  {w:"der Stress",g:"der",t:"noun",m:"the stress",s:"Ich habe viel Stress.",e:"I have a lot of stress."},
+  {w:"die Entspannung",g:"die",t:"noun",m:"the relaxation",s:"Ich brauche Entspannung.",e:"I need relaxation."},
+  {w:"der Schlaf",g:"der",t:"noun",m:"the sleep",s:"Ich brauche mehr Schlaf.",e:"I need more sleep."},
+  {w:"der Traum",g:"der",t:"noun",m:"the dream",s:"Ich hatte einen schönen Traum.",e:"I had a beautiful dream."},
+  {w:"die Hoffnung",g:"die",t:"noun",m:"the hope",s:"Ich habe Hoffnung.",e:"I have hope."},
+  {w:"die Angst",g:"die",t:"noun",m:"the fear/anxiety",s:"Ich habe Angst vor Spinnen.",e:"I am afraid of spiders."},
+  {w:"die Freude",g:"die",t:"noun",m:"the joy",s:"Ich fühle große Freude.",e:"I feel great joy."},
+  {w:"die Liebe",g:"die",t:"noun",m:"the love",s:"Liebe ist wunderbar.",e:"Love is wonderful."},
+  {w:"das Gefühl",g:"das",t:"noun",m:"the feeling",s:"Ich habe ein komisches Gefühl.",e:"I have a strange feeling."},
+  {w:"die Energie",g:"die",t:"noun",m:"the energy",s:"Ich habe viel Energie.",e:"I have a lot of energy."},
+  {w:"die Kraft",g:"die",t:"noun",m:"the strength/power",s:"Er hat viel Kraft.",e:"He has a lot of strength."},
+  {w:"die Ruhe",g:"die",t:"noun",m:"the calm/quiet",s:"Ich brauche Ruhe.",e:"I need quiet."},
+  {w:"der Lärm",g:"der",t:"noun",m:"the noise",s:"Der Lärm stört mich.",e:"The noise bothers me."},
+  {w:"das Licht",g:"das",t:"noun",m:"the light",s:"Das Licht ist zu hell.",e:"The light is too bright."},
+  {w:"der Schatten",g:"der",t:"noun",m:"the shadow/shade",s:"Ich sitze im Schatten.",e:"I sit in the shade."},
+  {w:"die Hitze",g:"die",t:"noun",m:"the heat",s:"Die Hitze ist unerträglich.",e:"The heat is unbearable."},
+  {w:"die Kälte",g:"die",t:"noun",m:"the cold",s:"Die Kälte macht mir nichts.",e:"The cold doesn't bother me."},
+  {w:"der Regen",g:"der",t:"noun",m:"the rain",s:"Der Regen macht alles nass.",e:"The rain makes everything wet."},
+  {w:"der Schnee",g:"der",t:"noun",m:"the snow",s:"Der Schnee ist weiß.",e:"The snow is white."},
+  {w:"der Wind",g:"der",t:"noun",m:"the wind",s:"Der Wind ist stark.",e:"The wind is strong."},
+  {w:"die Wolke",g:"die",t:"noun",m:"the cloud",s:"Die Wolken sind dunkel.",e:"The clouds are dark."},
+  {w:"die Sonne",g:"die",t:"noun",m:"the sun",s:"Die Sonne scheint.",e:"The sun is shining."},
+  {w:"der Mond",g:"der",t:"noun",m:"the moon",s:"Der Mond ist heute groß.",e:"The moon is big today."},
+  {w:"der Stern",g:"der",t:"noun",m:"the star",s:"Die Sterne leuchten.",e:"The stars are shining."},
+  {w:"der Himmel",g:"der",t:"noun",m:"the sky/heaven",s:"Der Himmel ist blau.",e:"The sky is blue."},
+  {w:"die Erde",g:"die",t:"noun",m:"the earth/ground",s:"Die Erde dreht sich.",e:"The earth rotates."},
+  {w:"das Feuer",g:"das",t:"noun",m:"the fire",s:"Das Feuer brennt.",e:"The fire burns."},
+  {w:"die Natur",g:"die",t:"noun",m:"the nature",s:"Ich liebe die Natur.",e:"I love nature."},
+  {w:"die Umwelt",g:"die",t:"noun",m:"the environment",s:"Wir müssen die Umwelt schützen.",e:"We must protect the environment."},
+  {w:"das Tier",g:"das",t:"noun",m:"the animal",s:"Das Tier ist wild.",e:"The animal is wild."},
+  {w:"der Vogel",g:"der",t:"noun",m:"the bird",s:"Der Vogel singt.",e:"The bird sings."},
+  {w:"das Pferd",g:"das",t:"noun",m:"the horse",s:"Das Pferd läuft schnell.",e:"The horse runs fast."},
+  {w:"die Kuh",g:"die",t:"noun",m:"the cow",s:"Die Kuh gibt Milch.",e:"The cow gives milk."},
+  {w:"das Schwein",g:"das",t:"noun",m:"the pig",s:"Das Schwein ist rosa.",e:"The pig is pink."},
+  {w:"das Huhn",g:"das",t:"noun",m:"the chicken",s:"Das Huhn legt Eier.",e:"The chicken lays eggs."},
+  {w:"die Pflanze",g:"die",t:"noun",m:"the plant",s:"Die Pflanze braucht Wasser.",e:"The plant needs water."},
+  {w:"der Gras",g:"der",t:"noun",m:"the grass",s:"Das Gras ist grün.",e:"The grass is green."},
+  {w:"die Wurzel",g:"die",t:"noun",m:"the root",s:"Die Wurzel ist tief.",e:"The root is deep."},
+  {w:"der Ast",g:"der",t:"noun",m:"the branch",s:"Der Ast ist gebrochen.",e:"The branch is broken."},
+  {w:"das Blatt",g:"das",t:"noun",m:"the leaf/sheet",s:"Das Blatt fällt.",e:"The leaf is falling."},
+
+  // More adjectives - Tier 4
+  {w:"interessant",g:"",t:"adjective",m:"interesting",s:"Das ist sehr interessant.",e:"That is very interesting."},
+  {w:"langweilig",g:"",t:"adjective",m:"boring",s:"Der Film ist langweilig.",e:"The movie is boring."},
+  {w:"lustig",g:"",t:"adjective",m:"funny/amusing",s:"Er ist sehr lustig.",e:"He is very funny."},
+  {w:"ernst",g:"",t:"adjective",m:"serious",s:"Das ist ernst.",e:"That is serious."},
+  {w:"ruhig",g:"",t:"adjective",m:"quiet/calm",s:"Das Kind ist ruhig.",e:"The child is quiet."},
+  {w:"laut",g:"",t:"adjective",m:"loud",s:"Die Musik ist zu laut.",e:"The music is too loud."},
+  {w:"leise",g:"",t:"adjective",m:"quiet/soft",s:"Sprich leise.",e:"Speak quietly."},
+  {w:"süß",g:"",t:"adjective",m:"sweet/cute",s:"Das Baby ist süß.",e:"The baby is cute."},
+  {w:"sauer",g:"",t:"adjective",m:"sour/angry",s:"Er ist sauer auf mich.",e:"He is angry with me."},
+  {w:"bitter",g:"",t:"adjective",m:"bitter",s:"Der Kaffee ist bitter.",e:"The coffee is bitter."},
+  {w:"salzig",g:"",t:"adjective",m:"salty",s:"Das Essen ist zu salzig.",e:"The food is too salty."},
+  {w:"scharf",g:"",t:"adjective",m:"sharp/spicy",s:"Das Essen ist scharf.",e:"The food is spicy."},
+  {w:"weich",g:"",t:"adjective",m:"soft",s:"Das Kissen ist weich.",e:"The pillow is soft."},
+  {w:"hart",g:"",t:"adjective",m:"hard",s:"Das ist eine harte Aufgabe.",e:"That is a hard task."},
+  {w:"glatt",g:"",t:"adjective",m:"smooth",s:"Die Oberfläche ist glatt.",e:"The surface is smooth."},
+  {w:"rau",g:"",t:"adjective",m:"rough",s:"Die Haut ist rau.",e:"The skin is rough."},
+  {w:"frisch",g:"",t:"adjective",m:"fresh",s:"Das Brot ist frisch.",e:"The bread is fresh."},
+  {w:"trocken",g:"",t:"adjective",m:"dry",s:"Die Luft ist trocken.",e:"The air is dry."},
+  {w:"nass",g:"",t:"adjective",m:"wet",s:"Meine Schuhe sind nass.",e:"My shoes are wet."},
+  {w:"sauber",g:"",t:"adjective",m:"clean",s:"Das Zimmer ist sauber.",e:"The room is clean."},
+  {w:"schmutzig",g:"",t:"adjective",m:"dirty",s:"Die Hände sind schmutzig.",e:"The hands are dirty."},
+  {w:"ordentlich",g:"",t:"adjective",m:"tidy/neat",s:"Sei ordentlich.",e:"Be tidy."},
+  {w:"unordentlich",g:"",t:"adjective",m:"untidy/messy",s:"Dein Zimmer ist unordentlich.",e:"Your room is messy."},
+  {w:"bequem",g:"",t:"adjective",m:"comfortable",s:"Das Sofa ist bequem.",e:"The sofa is comfortable."},
+  {w:"unbequem",g:"",t:"adjective",m:"uncomfortable",s:"Der Stuhl ist unbequem.",e:"The chair is uncomfortable."},
+  {w:"fleißig",g:"",t:"adjective",m:"diligent/hardworking",s:"Sie ist sehr fleißig.",e:"She is very hardworking."},
+  {w:"faul",g:"",t:"adjective",m:"lazy",s:"Sei nicht so faul.",e:"Don't be so lazy."},
+  {w:"höflich",g:"",t:"adjective",m:"polite",s:"Er ist sehr höflich.",e:"He is very polite."},
+  {w:"unhöflich",g:"",t:"adjective",m:"impolite/rude",s:"Das war unhöflich.",e:"That was rude."},
+  {w:"ehrlich",g:"",t:"adjective",m:"honest",s:"Sei ehrlich zu mir.",e:"Be honest with me."},
+  {w:"unehrlich",g:"",t:"adjective",m:"dishonest",s:"Er ist unehrlich.",e:"He is dishonest."},
+  {w:"mutig",g:"",t:"adjective",m:"brave/courageous",s:"Sie ist sehr mutig.",e:"She is very brave."},
+  {w:"ängstlich",g:"",t:"adjective",m:"anxious/fearful",s:"Das Kind ist ängstlich.",e:"The child is fearful."},
+  {w:"neugierig",g:"",t:"adjective",m:"curious",s:"Kinder sind neugierig.",e:"Children are curious."},
+  {w:"geduldig",g:"",t:"adjective",m:"patient",s:"Sei geduldig.",e:"Be patient."},
+  {w:"ungeduldig",g:"",t:"adjective",m:"impatient",s:"Er ist ungeduldig.",e:"He is impatient."},
+  {w:"freundlich",g:"",t:"adjective",m:"friendly",s:"Die Menschen sind freundlich.",e:"The people are friendly."},
+  {w:"unfreundlich",g:"",t:"adjective",m:"unfriendly",s:"Er war unfreundlich.",e:"He was unfriendly."},
+  {w:"stolz",g:"",t:"adjective",m:"proud",s:"Ich bin stolz auf dich.",e:"I am proud of you."},
+  {w:"bescheiden",g:"",t:"adjective",m:"modest/humble",s:"Er ist sehr bescheiden.",e:"He is very modest."},
+  {w:"klug",g:"",t:"adjective",m:"clever/smart",s:"Sie ist sehr klug.",e:"She is very clever."},
+  {w:"dumm",g:"",t:"adjective",m:"stupid/dumb",s:"Das war dumm.",e:"That was stupid."},
+  {w:"verrückt",g:"",t:"adjective",m:"crazy/mad",s:"Das ist verrückt.",e:"That is crazy."},
+  {w:"normal",g:"",t:"adjective",m:"normal",s:"Das ist ganz normal.",e:"That is quite normal."},
+  {w:"besonders",g:"",t:"adjective",m:"special/particular",s:"Das ist etwas Besonderes.",e:"That is something special."},
+  {w:"typisch",g:"",t:"adjective",m:"typical",s:"Das ist typisch deutsch.",e:"That is typically German."},
+  {w:"modern",g:"",t:"adjective",m:"modern",s:"Das ist sehr modern.",e:"That is very modern."},
+  {w:"traditionell",g:"",t:"adjective",m:"traditional",s:"Das ist ein traditionelles Fest.",e:"That is a traditional festival."},
+  {w:"natürlich",g:"",t:"adjective",m:"natural/of course",s:"Das ist natürlich richtig.",e:"That is naturally correct."},
+  {w:"künstlich",g:"",t:"adjective",m:"artificial",s:"Das ist künstlich.",e:"That is artificial."},
+
+  // More nouns - Tier 4
+  {w:"die Gesellschaft",g:"die",t:"noun",m:"the society/company",s:"Wir leben in einer Gesellschaft.",e:"We live in a society."},
+  {w:"die Wirtschaft",g:"die",t:"noun",m:"the economy",s:"Die Wirtschaft wächst.",e:"The economy is growing."},
+  {w:"die Politik",g:"die",t:"noun",m:"the politics",s:"Ich interessiere mich für Politik.",e:"I am interested in politics."},
+  {w:"die Regierung",g:"die",t:"noun",m:"the government",s:"Die Regierung hat entschieden.",e:"The government has decided."},
+  {w:"das Gesetz",g:"das",t:"noun",m:"the law",s:"Das Gesetz muss man befolgen.",e:"One must obey the law."},
+  {w:"die Regel",g:"die",t:"noun",m:"the rule",s:"Regeln müssen befolgt werden.",e:"Rules must be followed."},
+  {w:"die Ordnung",g:"die",t:"noun",m:"the order",s:"Ordnung ist wichtig.",e:"Order is important."},
+  {w:"die Freiheit",g:"die",t:"noun",m:"the freedom",s:"Freiheit ist wertvoll.",e:"Freedom is valuable."},
+  {w:"die Demokratie",g:"die",t:"noun",m:"the democracy",s:"Demokratie ist wichtig.",e:"Democracy is important."},
+  {w:"die Wahl",g:"die",t:"noun",m:"the election/choice",s:"Die Wahl ist morgen.",e:"The election is tomorrow."},
+  {w:"der Krieg",g:"der",t:"noun",m:"the war",s:"Krieg ist schrecklich.",e:"War is terrible."},
+  {w:"der Frieden",g:"der",t:"noun",m:"the peace",s:"Frieden ist das Ziel.",e:"Peace is the goal."},
+  {w:"die Kultur",g:"die",t:"noun",m:"the culture",s:"Ich liebe die deutsche Kultur.",e:"I love German culture."},
+  {w:"die Tradition",g:"die",t:"noun",m:"the tradition",s:"Das ist eine alte Tradition.",e:"That is an old tradition."},
+  {w:"die Religion",g:"die",t:"noun",m:"the religion",s:"Religion ist persönlich.",e:"Religion is personal."},
+  {w:"die Kirche",g:"die",t:"noun",m:"the church",s:"Die Kirche ist schön.",e:"The church is beautiful."},
+  {w:"die Wissenschaft",g:"die",t:"noun",m:"the science",s:"Wissenschaft ist faszinierend.",e:"Science is fascinating."},
+  {w:"die Technologie",g:"die",t:"noun",m:"the technology",s:"Technologie verändert die Welt.",e:"Technology changes the world."},
+  {w:"die Forschung",g:"die",t:"noun",m:"the research",s:"Die Forschung läuft gut.",e:"The research is going well."},
+  {w:"die Entwicklung",g:"die",t:"noun",m:"the development",s:"Die Entwicklung ist positiv.",e:"The development is positive."},
+  {w:"das Wachstum",g:"das",t:"noun",m:"the growth",s:"Das Wachstum ist stark.",e:"The growth is strong."},
+  {w:"die Lösung",g:"die",t:"noun",m:"the solution",s:"Wir brauchen eine Lösung.",e:"We need a solution."},
+  {w:"das Ziel",g:"das",t:"noun",m:"the goal/target",s:"Mein Ziel ist klar.",e:"My goal is clear."},
+  {w:"der Plan",g:"der",t:"noun",m:"the plan",s:"Ich habe einen Plan.",e:"I have a plan."},
+  {w:"die Idee",g:"die",t:"noun",m:"the idea",s:"Das ist eine gute Idee.",e:"That is a good idea."},
+  {w:"das Konzept",g:"das",t:"noun",m:"the concept",s:"Das Konzept ist interessant.",e:"The concept is interesting."},
+  {w:"die Methode",g:"die",t:"noun",m:"the method",s:"Die Methode funktioniert.",e:"The method works."},
+  {w:"der Prozess",g:"der",t:"noun",m:"the process",s:"Der Prozess dauert lange.",e:"The process takes a long time."},
+  {w:"die Qualität",g:"die",t:"noun",m:"the quality",s:"Die Qualität ist gut.",e:"The quality is good."},
+  {w:"die Menge",g:"die",t:"noun",m:"the quantity/amount",s:"Eine große Menge Wasser.",e:"A large amount of water."},
+  {w:"die Hälfte",g:"die",t:"noun",m:"the half",s:"Die Hälfte des Kuchens.",e:"Half of the cake."},
+  {w:"das Drittel",g:"das",t:"noun",m:"the third",s:"Ein Drittel der Zeit.",e:"A third of the time."},
+  {w:"das Viertel",g:"das",t:"noun",m:"the quarter",s:"Ein Viertel nach zwölf.",e:"A quarter past twelve."},
+  {w:"die Mehrheit",g:"die",t:"noun",m:"the majority",s:"Die Mehrheit hat gewählt.",e:"The majority has voted."},
+  {w:"die Minderheit",g:"die",t:"noun",m:"the minority",s:"Die Minderheit hat Rechte.",e:"The minority has rights."},
+  {w:"die Gruppe",g:"die",t:"noun",m:"the group",s:"Wir arbeiten in einer Gruppe.",e:"We work in a group."},
+  {w:"das Team",g:"das",t:"noun",m:"the team",s:"Das Team ist stark.",e:"The team is strong."},
+  {w:"der Partner",g:"der",t:"noun",m:"the partner",s:"Er ist mein Partner.",e:"He is my partner."},
+  {w:"die Partnerschaft",g:"die",t:"noun",m:"the partnership",s:"Eine gute Partnerschaft.",e:"A good partnership."},
+  {w:"der Kollege",g:"der",t:"noun",m:"the colleague (male)",s:"Er ist mein Kollege.",e:"He is my colleague."},
+  {w:"die Kollegin",g:"die",t:"noun",m:"the colleague (female)",s:"Sie ist meine Kollegin.",e:"She is my colleague."},
+  {w:"der Kunde",g:"der",t:"noun",m:"the customer (male)",s:"Der Kunde hat Recht.",e:"The customer is always right."},
+  {w:"die Kundin",g:"die",t:"noun",m:"the customer (female)",s:"Die Kundin ist zufrieden.",e:"The female customer is satisfied."},
+  {w:"der Vertrag",g:"der",t:"noun",m:"the contract",s:"Ich unterschreibe den Vertrag.",e:"I sign the contract."},
+  {w:"das Projekt",g:"das",t:"noun",m:"the project",s:"Das Projekt ist wichtig.",e:"The project is important."},
+  {w:"die Aufgabe",g:"die",t:"noun",m:"the task/assignment",s:"Die Aufgabe ist schwer.",e:"The task is difficult."},
+  {w:"die Verantwortung",g:"die",t:"noun",m:"the responsibility",s:"Ich übernehme Verantwortung.",e:"I take responsibility."},
+  {w:"die Entscheidung",g:"die",t:"noun",m:"the decision",s:"Die Entscheidung war richtig.",e:"The decision was right."},
+  {w:"der Fehler",g:"der",t:"noun",m:"the mistake/error",s:"Ich habe einen Fehler gemacht.",e:"I made a mistake."},
+  {w:"der Erfolg",g:"der",t:"noun",m:"the success",s:"Der Erfolg macht mich glücklich.",e:"Success makes me happy."},
+  {w:"das Risiko",g:"das",t:"noun",m:"the risk",s:"Das ist ein Risiko.",e:"That is a risk."},
+
+  // More verbs - Tier 4
+  {w:"entwickeln",g:"",t:"verb",m:"to develop",s:"Wir entwickeln neue Ideen.",e:"We develop new ideas."},
+  {w:"erreichen",g:"",t:"verb",m:"to reach/achieve",s:"Ich will mein Ziel erreichen.",e:"I want to reach my goal."},
+  {w:"schaffen",g:"",t:"verb",m:"to create/manage",s:"Du schaffst das!",e:"You can do it!"},
+  {w:"ermöglichen",g:"",t:"verb",m:"to enable/make possible",s:"Das ermöglicht mehr Freiheit.",e:"That enables more freedom."},
+  {w:"erhalten",g:"",t:"verb",m:"to receive/maintain",s:"Ich habe einen Brief erhalten.",e:"I received a letter."},
+  {w:"entstehen",g:"",t:"verb",m:"to arise/originate",s:"Neue Ideen entstehen.",e:"New ideas arise."},
+  {w:"bestehen",g:"",t:"verb",m:"to consist/pass (exam)",s:"Ich bestehe die Prüfung.",e:"I pass the exam."},
+  {w:"untersuchen",g:"",t:"verb",m:"to examine/investigate",s:"Wir untersuchen das Problem.",e:"We investigate the problem."},
+  {w:"beschreiben",g:"",t:"verb",m:"to describe",s:"Beschreibe das Bild.",e:"Describe the picture."},
+  {w:"darstellen",g:"",t:"verb",m:"to represent/depict",s:"Das stellt die Situation dar.",e:"That depicts the situation."},
+  {w:"zusammenarbeiten",g:"",t:"verb",m:"to cooperate",s:"Wir arbeiten zusammen.",e:"We work together."},
+  {w:"vorbereiten",g:"",t:"verb",m:"to prepare",s:"Ich bereite mich vor.",e:"I prepare myself."},
+  {w:"aufnehmen",g:"",t:"verb",m:"to record/absorb",s:"Ich nehme das Gespräch auf.",e:"I record the conversation."},
+  {w:"abgeben",g:"",t:"verb",m:"to hand in/submit",s:"Ich gebe die Aufgabe ab.",e:"I hand in the assignment."},
+  {w:"abholen",g:"",t:"verb",m:"to pick up/collect",s:"Ich hole dich ab.",e:"I will pick you up."},
+  {w:"anbieten",g:"",t:"verb",m:"to offer",s:"Ich biete dir Hilfe an.",e:"I offer you help."},
+  {w:"annehmen",g:"",t:"verb",m:"to accept/assume",s:"Ich nehme das Angebot an.",e:"I accept the offer."},
+  {w:"ablehnen",g:"",t:"verb",m:"to reject/refuse",s:"Er lehnt das Angebot ab.",e:"He rejects the offer."},
+  {w:"bewerben",g:"",t:"verb",m:"to apply (for a job)",s:"Ich bewerbe mich für die Stelle.",e:"I apply for the position."},
+  {w:"einsteigen",g:"",t:"verb",m:"to get in/board",s:"Wir steigen in den Zug ein.",e:"We board the train."},
+  {w:"aussteigen",g:"",t:"verb",m:"to get out/exit",s:"Ich steige an der nächsten Station aus.",e:"I exit at the next station."},
+  {w:"umsteigen",g:"",t:"verb",m:"to change (transport)",s:"Ich muss umsteigen.",e:"I have to change trains."},
+  {w:"ankommen",g:"",t:"verb",m:"to arrive",s:"Wann kommst du an?",e:"When do you arrive?"},
+  {w:"abfahren",g:"",t:"verb",m:"to depart/leave",s:"Der Zug fährt um drei ab.",e:"The train departs at three."},
+  {w:"übernachten",g:"",t:"verb",m:"to stay overnight",s:"Wir übernachten im Hotel.",e:"We stay overnight at the hotel."},
+  {w:"auschecken",g:"",t:"verb",m:"to check out",s:"Wann müssen wir auschecken?",e:"When do we have to check out?"},
+  {w:"buchen",g:"",t:"verb",m:"to book/reserve",s:"Ich buche ein Hotelzimmer.",e:"I book a hotel room."},
+  {w:"stornieren",g:"",t:"verb",m:"to cancel",s:"Ich möchte stornieren.",e:"I would like to cancel."},
+  {w:"bestellen",g:"",t:"verb",m:"to order",s:"Ich bestelle eine Pizza.",e:"I order a pizza."},
+  {w:"servieren",g:"",t:"verb",m:"to serve",s:"Der Kellner serviert das Essen.",e:"The waiter serves the food."},
+  {w:"empfehlen",g:"",t:"verb",m:"to recommend",s:"Ich empfehle dieses Restaurant.",e:"I recommend this restaurant."},
+  {w:"probieren",g:"",t:"verb",m:"to try/taste",s:"Probier das mal!",e:"Try that!"},
+  {w:"schmecken",g:"",t:"verb",m:"to taste",s:"Das schmeckt sehr gut.",e:"That tastes very good."},
+  {w:"riechen",g:"",t:"verb",m:"to smell",s:"Das riecht gut.",e:"That smells good."},
+  {w:"anfühlen",g:"",t:"verb",m:"to feel (touch)",s:"Das fühlt sich weich an.",e:"That feels soft."},
+  {w:"ausehen",g:"",t:"verb",m:"to look/appear",s:"Du siehst müde aus.",e:"You look tired."},
+  {w:"klingen",g:"",t:"verb",m:"to sound",s:"Das klingt gut.",e:"That sounds good."},
+  {w:"funktionieren",g:"",t:"verb",m:"to work/function",s:"Das funktioniert nicht.",e:"That doesn't work."},
+  {w:"berechnen",g:"",t:"verb",m:"to calculate",s:"Ich berechne den Preis.",e:"I calculate the price."},
+  {w:"messen",g:"",t:"verb",m:"to measure",s:"Ich messe die Länge.",e:"I measure the length."},
+  {w:"wiegen",g:"",t:"verb",m:"to weigh",s:"Das Paket wiegt fünf Kilo.",e:"The package weighs five kilos."},
+  {w:"zählen",g:"",t:"verb",m:"to count",s:"Ich zähle das Geld.",e:"I count the money."},
+  {w:"addieren",g:"",t:"verb",m:"to add",s:"Addiere die Zahlen.",e:"Add the numbers."},
+  {w:"subtrahieren",g:"",t:"verb",m:"to subtract",s:"Subtrahiere zehn.",e:"Subtract ten."},
+  {w:"multiplizieren",g:"",t:"verb",m:"to multiply",s:"Multipliziere mit zwei.",e:"Multiply by two."},
+  {w:"dividieren",g:"",t:"verb",m:"to divide",s:"Dividiere durch vier.",e:"Divide by four."},
+  {w:"übersetzen",g:"",t:"verb",m:"to translate",s:"Kannst du das übersetzen?",e:"Can you translate that?"},
+  {w:"aufschreiben",g:"",t:"verb",m:"to write down",s:"Ich schreibe es auf.",e:"I write it down."},
+  {w:"nachschlagen",g:"",t:"verb",m:"to look up",s:"Ich schlage das Wort nach.",e:"I look up the word."},
+  {w:"ausdrucken",g:"",t:"verb",m:"to print",s:"Ich drucke das Dokument aus.",e:"I print the document."},
+  {w:"speichern",g:"",t:"verb",m:"to save (file)",s:"Ich speichere die Datei.",e:"I save the file."},
+  {w:"herunterladen",g:"",t:"verb",m:"to download",s:"Ich lade die App herunter.",e:"I download the app."},
+  {w:"hochladen",g:"",t:"verb",m:"to upload",s:"Ich lade das Foto hoch.",e:"I upload the photo."},
+  {w:"installieren",g:"",t:"verb",m:"to install",s:"Ich installiere das Programm.",e:"I install the program."},
+  {w:"aktualisieren",g:"",t:"verb",m:"to update",s:"Ich aktualisiere das System.",e:"I update the system."},
+  {w:"löschen",g:"",t:"verb",m:"to delete/erase",s:"Ich lösche die alten Dateien.",e:"I delete the old files."},
+  {w:"aktivieren",g:"",t:"verb",m:"to activate",s:"Ich aktiviere das Konto.",e:"I activate the account."},
+  {w:"deaktivieren",g:"",t:"verb",m:"to deactivate",s:"Ich deaktiviere die Option.",e:"I deactivate the option."},
+  {w:"einloggen",g:"",t:"verb",m:"to log in",s:"Ich logge mich ein.",e:"I log in."},
+  {w:"ausloggen",g:"",t:"verb",m:"to log out",s:"Ich logge mich aus.",e:"I log out."},
+  {w:"tippen",g:"",t:"verb",m:"to type",s:"Ich tippe schnell.",e:"I type quickly."},
+  {w:"klicken",g:"",t:"verb",m:"to click",s:"Klick auf den Button.",e:"Click on the button."},
+  {w:"scrollen",g:"",t:"verb",m:"to scroll",s:"Scroll nach unten.",e:"Scroll down."},
+
+  // More nouns for everyday life - Tier 4
+  {w:"die Adresse",g:"die",t:"noun",m:"the address",s:"Wie ist deine Adresse?",e:"What is your address?"},
+  {w:"die Postleitzahl",g:"die",t:"noun",m:"the postal code",s:"Wie ist die Postleitzahl?",e:"What is the postal code?"},
+  {w:"das Formular",g:"das",t:"noun",m:"the form",s:"Füll das Formular aus.",e:"Fill out the form."},
+  {w:"der Termin",g:"der",t:"noun",m:"the appointment",s:"Ich habe einen Termin.",e:"I have an appointment."},
+  {w:"die Warteschlange",g:"die",t:"noun",m:"the queue",s:"Die Warteschlange ist lang.",e:"The queue is long."},
+  {w:"das Fundbüro",g:"das",t:"noun",m:"the lost and found",s:"Ich gehe zum Fundbüro.",e:"I go to the lost and found."},
+  {w:"die Notaufnahme",g:"die",t:"noun",m:"the emergency room",s:"Ich muss in die Notaufnahme.",e:"I have to go to the emergency room."},
+  {w:"der Notruf",g:"der",t:"noun",m:"the emergency call",s:"Ich rufe den Notruf.",e:"I call the emergency number."},
+  {w:"die Polizei",g:"die",t:"noun",m:"the police",s:"Ich rufe die Polizei.",e:"I call the police."},
+  {w:"die Feuerwehr",g:"die",t:"noun",m:"the fire brigade",s:"Die Feuerwehr ist da.",e:"The fire brigade is here."},
+  {w:"der Krankenwagen",g:"der",t:"noun",m:"the ambulance",s:"Der Krankenwagen kommt.",e:"The ambulance is coming."},
+  {w:"die Versicherung",g:"die",t:"noun",m:"the insurance",s:"Ich brauche eine Versicherung.",e:"I need insurance."},
+  {w:"der Unfall",g:"der",t:"noun",m:"the accident",s:"Es gab einen Unfall.",e:"There was an accident."},
+  {w:"der Schaden",g:"der",t:"noun",m:"the damage",s:"Der Schaden ist groß.",e:"The damage is large."},
+  {w:"die Reparatur",g:"die",t:"noun",m:"the repair",s:"Die Reparatur kostet viel.",e:"The repair costs a lot."},
+  {w:"die Werkstatt",g:"die",t:"noun",m:"the workshop/garage",s:"Mein Auto ist in der Werkstatt.",e:"My car is in the garage."},
+  {w:"der Mechaniker",g:"der",t:"noun",m:"the mechanic",s:"Der Mechaniker repariert das Auto.",e:"The mechanic repairs the car."},
+  {w:"das Benzin",g:"das",t:"noun",m:"the petrol/gasoline",s:"Ich tanke Benzin.",e:"I fill up with petrol."},
+  {w:"die Tankstelle",g:"die",t:"noun",m:"the gas station",s:"Ich halte an der Tankstelle.",e:"I stop at the gas station."},
+  {w:"der Parkplatz",g:"der",t:"noun",m:"the parking space",s:"Ich suche einen Parkplatz.",e:"I look for a parking space."},
+  {w:"die Ampel",g:"die",t:"noun",m:"the traffic light",s:"Die Ampel ist rot.",e:"The traffic light is red."},
+  {w:"der Stau",g:"der",t:"noun",m:"the traffic jam",s:"Es gibt einen Stau.",e:"There is a traffic jam."},
+  {w:"die Bushaltestelle",g:"die",t:"noun",m:"the bus stop",s:"Wo ist die Bushaltestelle?",e:"Where is the bus stop?"},
+  {w:"der Bus",g:"der",t:"noun",m:"the bus",s:"Der Bus kommt um drei.",e:"The bus comes at three."},
+  {w:"die U-Bahn",g:"die",t:"noun",m:"the subway/underground",s:"Ich nehme die U-Bahn.",e:"I take the subway."},
+  {w:"die S-Bahn",g:"die",t:"noun",m:"the city train",s:"Die S-Bahn fährt oft.",e:"The city train runs often."},
+  {w:"das Taxi",g:"das",t:"noun",m:"the taxi",s:"Ich nehme ein Taxi.",e:"I take a taxi."},
+  {w:"der Fahrer",g:"der",t:"noun",m:"the driver",s:"Der Fahrer ist nett.",e:"The driver is nice."},
+  {w:"das Navi",g:"das",t:"noun",m:"the GPS/navigation",s:"Das Navi zeigt den Weg.",e:"The GPS shows the way."},
+  {w:"die Karte",g:"die",t:"noun",m:"the map/card",s:"Hast du eine Karte?",e:"Do you have a map?"},
+  {w:"die Richtung",g:"die",t:"noun",m:"the direction",s:"In welche Richtung?",e:"In which direction?"},
+  {w:"die Kreuzung",g:"die",t:"noun",m:"the intersection",s:"Bieg an der Kreuzung rechts ab.",e:"Turn right at the intersection."},
+  {w:"die Ecke",g:"die",t:"noun",m:"the corner",s:"Treffen wir uns an der Ecke.",e:"Let's meet at the corner."},
+  {w:"der Norden",g:"der",t:"noun",m:"the north",s:"Im Norden ist es kälter.",e:"It is colder in the north."},
+  {w:"der Süden",g:"der",t:"noun",m:"the south",s:"Im Süden ist es wärmer.",e:"It is warmer in the south."},
+  {w:"der Osten",g:"der",t:"noun",m:"the east",s:"Die Sonne geht im Osten auf.",e:"The sun rises in the east."},
+  {w:"der Westen",g:"der",t:"noun",m:"the west",s:"Im Westen gibt es viele Wälder.",e:"In the west there are many forests."},
+  {w:"die Entfernung",g:"die",t:"noun",m:"the distance",s:"Die Entfernung ist groß.",e:"The distance is large."},
+  {w:"der Kilometer",g:"der",t:"noun",m:"the kilometer",s:"Es sind zehn Kilometer.",e:"It is ten kilometers."},
+  {w:"die Strecke",g:"die",t:"noun",m:"the route/distance",s:"Die Strecke ist lang.",e:"The route is long."},
+  {w:"die Dauer",g:"die",t:"noun",m:"the duration",s:"Die Dauer ist unklar.",e:"The duration is unclear."},
+  {w:"die Minute",g:"die",t:"noun",m:"the minute",s:"Ich brauche fünf Minuten.",e:"I need five minutes."},
+  {w:"die Sekunde",g:"die",t:"noun",m:"the second",s:"Warte eine Sekunde.",e:"Wait a second."},
+  {w:"der Moment",g:"der",t:"noun",m:"the moment",s:"Einen Moment bitte.",e:"One moment please."},
+  {w:"die Vergangenheit",g:"die",t:"noun",m:"the past",s:"Die Vergangenheit ist vorbei.",e:"The past is over."},
+  {w:"die Gegenwart",g:"die",t:"noun",m:"the present",s:"Lebe in der Gegenwart.",e:"Live in the present."},
+  {w:"die Zukunft",g:"die",t:"noun",m:"the future",s:"Die Zukunft ist ungewiss.",e:"The future is uncertain."},
+  {w:"das Jahrhundert",g:"das",t:"noun",m:"the century",s:"Im zwanzigsten Jahrhundert.",e:"In the twentieth century."},
+  {w:"das Jahrzehnt",g:"das",t:"noun",m:"the decade",s:"Das letzte Jahrzehnt war interessant.",e:"The last decade was interesting."},
+];
+
+// ===================== APP STATE =====================
+let deck = [];
+let learnedWords = [];
+let removedWords = [];
+let currentIndex = 0;
+let isAnimating = false;
+let meaningShown = false;
+
+function loadState() {
+  try {
+    const s = localStorage.getItem('germanApp_v2');
+    if (s) {
+      const d = JSON.parse(s);
+      learnedWords = d.learned || [];
+      removedWords = d.removed || [];
+      deck = d.deck || null;
+      if (!deck) buildDeck();
+      currentIndex = d.idx || 0;
+      if (currentIndex >= deck.length) currentIndex = 0;
+    } else { buildDeck(); }
+  } catch(e) { buildDeck(); }
+}
+
+function buildDeck() {
+  const learnedSet = new Set(learnedWords.map(w => w.w));
+  const removedSet = new Set(removedWords.map(w => w.w));
+  deck = ALL_WORDS.filter(w => !learnedSet.has(w.w) && !removedSet.has(w.w));
+  currentIndex = 0;
+}
+
+function saveState() {
+  try {
+    localStorage.setItem('germanApp_v2', JSON.stringify({
+      learned: learnedWords, removed: removedWords, deck, idx: currentIndex
+    }));
+  } catch(e) {}
+}
+
+// ===================== RENDER =====================
+function renderCard() {
+  if (currentIndex >= deck.length) {
+    document.getElementById('flashcard').style.display = 'none';
+    document.getElementById('emptyState').classList.add('show');
+    return;
+  }
+  document.getElementById('flashcard').style.display = 'flex';
+  document.getElementById('emptyState').classList.remove('show');
+
+  const w = deck[currentIndex];
+  meaningShown = false;
+
+  document.getElementById('cardNumber').textContent = `Word ${currentIndex + 1} of ${deck.length}`;
+  document.getElementById('germanWord').textContent = w.w;
+  document.getElementById('genderTag').textContent = w.g ? `Gender: ${w.g}` : '';
+  document.getElementById('meaningText').textContent = w.m;
+  document.getElementById('germanSentence').textContent = w.s;
+  document.getElementById('englishSentence').textContent = w.e;
+
+  const badge = document.getElementById('cardTypeBadge');
+  badge.textContent = w.t;
+  badge.className = 'card-type-badge ' + (
+    w.t === 'noun' ? 'type-noun' :
+    w.t === 'verb' ? 'type-verb' :
+    w.t === 'adjective' ? 'type-adj' : 'type-other'
+  );
+
+  document.getElementById('meaningReveal').classList.remove('show');
+  document.getElementById('englishSentence').classList.remove('show');
+
+  // Update stats
+  document.getElementById('learnedCount').textContent = learnedWords.length;
+  document.getElementById('removedCount').textContent = removedWords.length;
+  document.getElementById('menuLearnedCount').textContent = learnedWords.length;
+
+  // Progress
+  const total = ALL_WORDS.length;
+  const done = learnedWords.length + removedWords.length;
+  document.getElementById('progressFill').style.width = (done / total * 100) + '%';
+
+  const card = document.getElementById('flashcard');
+  card.classList.remove('card-animate');
+  void card.offsetWidth;
+  card.classList.add('card-animate');
+}
+
+function showMeaning() {
+  meaningShown = true;
+  document.getElementById('meaningReveal').classList.add('show');
+  document.getElementById('englishSentence').classList.add('show');
+}
+
+function nextCard() {
+  if (currentIndex < deck.length - 1) {
+    currentIndex++;
+  } else {
+    currentIndex = deck.length; // show empty state
+  }
+  saveState();
+  renderCard();
+}
+
+function handleSwipe(dir) {
+  if (isAnimating) return;
+  if (currentIndex >= deck.length) return;
+
+  const word = deck[currentIndex];
+
+  if (dir === 'left') {
+    showMeaning();
+    return;
+  }
+
+  isAnimating = true;
+  const card = document.getElementById('flashcard');
+
+  if (dir === 'up') {
+    removedWords.push(word);
+    deck.splice(currentIndex, 1);
+    if (currentIndex >= deck.length) currentIndex = Math.max(0, deck.length - 1);
+    card.classList.add('fly-up');
+  } else if (dir === 'down') {
+    learnedWords.push(word);
+    deck.splice(currentIndex, 1);
+    if (currentIndex >= deck.length) currentIndex = Math.max(0, deck.length - 1);
+    card.classList.add('fly-down');
+  } else if (dir === 'right') {
+    card.classList.add('fly-right');
+    currentIndex++;
+    if (currentIndex >= deck.length) currentIndex = 0;
+  }
+
+  setTimeout(() => {
+    isAnimating = false;
+    card.classList.remove('fly-up', 'fly-down', 'fly-right', 'fly-left');
+    card.style.transform = '';
+    card.style.opacity = '';
+    saveState();
+    renderCard();
+  }, 350);
+}
+
+// ===================== TOUCH & MOUSE =====================
+let startX = 0, startY = 0, isDragging = false;
+const card = document.getElementById('flashcard');
+
+card.addEventListener('touchstart', e => {
+  startX = e.touches[0].clientX;
+  startY = e.touches[0].clientY;
+  isDragging = true;
+  card.style.transition = 'none';
+}, {passive: true});
+
+card.addEventListener('touchmove', e => {
+  if (!isDragging) return;
+  const dx = e.touches[0].clientX - startX;
+  const dy = e.touches[0].clientY - startY;
+  const rot = dx * 0.08;
+
+  // Show overlays
+  const threshold = 40;
+  document.getElementById('overlayUp').style.opacity = dy < -threshold ? Math.min(1, (-dy - threshold) / 80) : 0;
+  document.getElementById('overlayDown').style.opacity = dy > threshold ? Math.min(1, (dy - threshold) / 80) : 0;
+  document.getElementById('overlayLeft').style.opacity = dx < -threshold ? Math.min(1, (-dx - threshold) / 80) : 0;
+  document.getElementById('overlayRight').style.opacity = dx > threshold ? Math.min(1, (dx - threshold) / 80) : 0;
+
+  card.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg)`;
+}, {passive: true});
+
+card.addEventListener('touchend', e => {
+  if (!isDragging) return;
+  isDragging = false;
+  card.style.transition = '';
+  clearOverlays();
+
+  const dx = e.changedTouches[0].clientX - startX;
+  const dy = e.changedTouches[0].clientY - startY;
+  const absDx = Math.abs(dx), absDy = Math.abs(dy);
+  const threshold = 60;
+
+  if (absDy > threshold && absDy > absDx) {
+    handleSwipe(dy < 0 ? 'up' : 'down');
+  } else if (absDx > threshold && absDx > absDy) {
+    handleSwipe(dx < 0 ? 'left' : 'right');
+  } else {
+    card.style.transform = '';
+  }
+}, {passive: true});
+
+// Mouse support
+card.addEventListener('mousedown', e => {
+  startX = e.clientX; startY = e.clientY; isDragging = true;
+  card.style.transition = 'none';
+  e.preventDefault();
+});
+document.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  const dx = e.clientX - startX, dy = e.clientY - startY;
+  const rot = dx * 0.08;
+  const threshold = 40;
+  document.getElementById('overlayUp').style.opacity = dy < -threshold ? Math.min(1, (-dy - threshold) / 80) : 0;
+  document.getElementById('overlayDown').style.opacity = dy > threshold ? Math.min(1, (dy - threshold) / 80) : 0;
+  document.getElementById('overlayLeft').style.opacity = dx < -threshold ? Math.min(1, (-dx - threshold) / 80) : 0;
+  document.getElementById('overlayRight').style.opacity = dx > threshold ? Math.min(1, (dx - threshold) / 80) : 0;
+  card.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg)`;
+});
+document.addEventListener('mouseup', e => {
+  if (!isDragging) return;
+  isDragging = false;
+  card.style.transition = '';
+  clearOverlays();
+  const dx = e.clientX - startX, dy = e.clientY - startY;
+  const absDx = Math.abs(dx), absDy = Math.abs(dy);
+  if (absDy > 60 && absDy > absDx) handleSwipe(dy < 0 ? 'up' : 'down');
+  else if (absDx > 60 && absDx > absDy) handleSwipe(dx < 0 ? 'left' : 'right');
+  else card.style.transform = '';
+});
+
+function clearOverlays() {
+  ['overlayUp','overlayDown','overlayLeft','overlayRight'].forEach(id => {
+    document.getElementById(id).style.opacity = 0;
+  });
+}
+
+// ===================== MENU =====================
+function showMenu() { document.getElementById('menuOverlay').classList.add('show'); }
+function hideMenu(e) {
+  if (!e || e.target === document.getElementById('menuOverlay'))
+    document.getElementById('menuOverlay').classList.remove('show');
+}
+
+function restartDeck() {
+  buildDeck();
+  saveState();
+  renderCard();
+  document.getElementById('menuOverlay').classList.remove('show');
+}
+
+function resetAll() {
+  if (confirm('Reset ALL progress? This cannot be undone.')) {
+    learnedWords = []; removedWords = [];
+    buildDeck(); saveState(); renderCard();
+  }
+}
+
+// ===================== TEST MODE =====================
+function startTest() {
+  document.getElementById('menuOverlay').classList.remove('show');
+  if (learnedWords.length < 4) {
+    alert('You need at least 4 learned words to take a test.\nMark more words as learned by swiping DOWN!');
+    return;
+  }
+  document.getElementById('testScreen').classList.add('show');
+  buildTest();
+}
+
+function closeTest() { document.getElementById('testScreen').classList.remove('show'); }
+
+let testAnswered = 0, testCorrect = 0;
+
+function buildTest() {
+  testAnswered = 0; testCorrect = 0;
+  updateTestScore();
+  const body = document.getElementById('testBody');
+  body.innerHTML = '';
+  const shuffled = [...learnedWords].sort(() => Math.random() - 0.5);
+
+  shuffled.forEach((word, i) => {
+    const wrongPool = ALL_WORDS.filter(w => w.w !== word.w);
+    const wrongs = wrongPool.sort(() => Math.random() - 0.5).slice(0, 3);
+    const options = [...wrongs, word].sort(() => Math.random() - 0.5);
+
+    const qDiv = document.createElement('div');
+    qDiv.className = 'test-question';
+    qDiv.innerHTML = `
+      <div class="test-q-word">${word.w}</div>
+      <div class="test-q-sentence">${word.s}</div>
+      <div class="test-options" id="opts_${i}">
+        ${options.map(o => `<button class="test-option" onclick="checkAnswer(this, '${o.m}', '${word.m}', ${i})">${o.m}</button>`).join('')}
+      </div>
+    `;
+    body.appendChild(qDiv);
+  });
+}
+
+function checkAnswer(btn, chosen, correct, qIdx) {
+  const opts = document.getElementById('opts_' + qIdx);
+  if (opts.dataset.answered) return;
+  opts.dataset.answered = '1';
+  testAnswered++;
+
+  [...opts.querySelectorAll('.test-option')].forEach(b => {
+    if (b.textContent === correct) b.classList.add('correct');
+  });
+  if (chosen !== correct) { btn.classList.add('wrong'); }
+  else { testCorrect++; }
+  updateTestScore();
+}
+
+function updateTestScore() {
+  document.getElementById('testScore').textContent = `${testCorrect} / ${testAnswered}`;
+  const pct = testAnswered > 0 ? Math.round(testCorrect / testAnswered * 100) : 0;
+  document.getElementById('testProgress').textContent = pct + '%';
+}
+
+// ===================== LEARNED LIST =====================
+function showLearnedList() {
+  document.getElementById('menuOverlay').classList.remove('show');
+  const list = document.getElementById('learnedList');
+  if (learnedWords.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);">No learned words yet.<br>Swipe DOWN to mark words as learned!</div>';
+  } else {
+    list.innerHTML = learnedWords.map(w => `
+      <div class="learned-item">
+        <div>
+          <div class="learned-word">${w.w}</div>
+          <div class="learned-meaning">${w.m}</div>
+        </div>
+        <div class="learned-badge">learned</div>
+      </div>
+    `).join('');
+  }
+  document.getElementById('learnedScreen').classList.add('show');
+}
+
+function closeLearnedList() { document.getElementById('learnedScreen').classList.remove('show'); }
+
+// ===================== SERVICE WORKER (Offline) =====================
+if ('serviceWorker' in navigator) {
+  const sw = `
+    const CACHE = 'deutsch-v1';
+    const ASSETS = [location.href];
+    self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS))));
+    self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
+  `;
+  const blob = new Blob([sw], {type: 'application/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+}
+
+// ===================== INIT =====================
+loadState();
+renderCard();
+</script>
+</body>
+</html>
