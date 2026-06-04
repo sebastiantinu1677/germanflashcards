@@ -1178,7 +1178,7 @@ card.addEventListener('touchstart', e => {
   startX = e.touches[0].clientX;
   startY = e.touches[0].clientY;
   isDragging = true;
-  card.style.transition = 'none';
+  card.style.transition = 'none'; // disable transition while finger is dragging
 }, {passive: true});
 
 card.addEventListener('touchmove', e => {
@@ -1200,7 +1200,6 @@ card.addEventListener('touchmove', e => {
 card.addEventListener('touchend', e => {
   if (!isDragging) return;
   isDragging = false;
-  card.style.transition = '';
   clearOverlays();
 
   const dx = e.changedTouches[0].clientX - startX;
@@ -1209,11 +1208,26 @@ card.addEventListener('touchend', e => {
   const threshold = 60;
 
   if (absDy > threshold && absDy > absDx) {
+    card.style.transition = '';
     handleSwipe(dy < 0 ? 'up' : 'down');
   } else if (absDx > threshold && absDx > absDy) {
-    handleSwipe(dx < 0 ? 'left' : 'right');
+    if (dx < 0) {
+      // Swipe LEFT → snap back to center, then show meaning
+      card.style.transition = 'transform 0.35s cubic-bezier(0.25, 1.5, 0.5, 1)';
+      card.style.transform = '';
+      setTimeout(() => {
+        card.style.transition = '';
+        handleSwipe('left');
+      }, 350);
+    } else {
+      card.style.transition = '';
+      handleSwipe('right');
+    }
   } else {
+    // Not enough drag — spring back
+    card.style.transition = 'transform 0.3s cubic-bezier(0.25, 1.5, 0.5, 1)';
     card.style.transform = '';
+    setTimeout(() => { card.style.transition = ''; }, 300);
   }
 }, {passive: true});
 
@@ -1237,13 +1251,29 @@ document.addEventListener('mousemove', e => {
 document.addEventListener('mouseup', e => {
   if (!isDragging) return;
   isDragging = false;
-  card.style.transition = '';
   clearOverlays();
   const dx = e.clientX - startX, dy = e.clientY - startY;
   const absDx = Math.abs(dx), absDy = Math.abs(dy);
-  if (absDy > 60 && absDy > absDx) handleSwipe(dy < 0 ? 'up' : 'down');
-  else if (absDx > 60 && absDx > absDy) handleSwipe(dx < 0 ? 'left' : 'right');
-  else card.style.transform = '';
+  if (absDy > 60 && absDy > absDx) {
+    card.style.transition = '';
+    handleSwipe(dy < 0 ? 'up' : 'down');
+  } else if (absDx > 60 && absDx > absDy) {
+    if (dx < 0) {
+      card.style.transition = 'transform 0.35s cubic-bezier(0.25, 1.5, 0.5, 1)';
+      card.style.transform = '';
+      setTimeout(() => {
+        card.style.transition = '';
+        handleSwipe('left');
+      }, 350);
+    } else {
+      card.style.transition = '';
+      handleSwipe('right');
+    }
+  } else {
+    card.style.transition = 'transform 0.3s cubic-bezier(0.25, 1.5, 0.5, 1)';
+    card.style.transform = '';
+    setTimeout(() => { card.style.transition = ''; }, 300);
+  }
 });
 
 function clearOverlays() {
