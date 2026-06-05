@@ -1026,7 +1026,6 @@ function renderCard(){
   const meta=document.getElementById('wordMeta');
   meta.innerHTML='';
   if(w.g){ const t=document.createElement('span'); t.className='meta-tag gender'; t.textContent=w.g; meta.appendChild(t); }
-  if(w.t==='noun'&&w.p){ const t=document.createElement('span'); t.className='meta-tag plural'; t.textContent='pl: '+w.p; meta.appendChild(t); }
 
   // Type badge
   const badge=document.getElementById('cardTypeBadge');
@@ -1037,12 +1036,17 @@ function renderCard(){
   document.getElementById('meaningText').textContent=w.m;
   document.getElementById('meaningReveal').classList.remove('show');
 
-  // Extra info (conjugation for verbs) — hidden until left swipe
+  // Extra info — always visible by default
   const extra=document.getElementById('extraInfo');
   extra.innerHTML='';
   extra.classList.remove('show');
   if(w.t==='verb'&&w.c){
     extra.innerHTML=`<div class="extra-box"><div class="extra-box-label">Conjugation (Present)</div><div class="extra-box-val">${w.c}</div></div>`;
+    extra.classList.add('show');
+  }
+  if(w.t==='noun'&&w.p){
+    extra.innerHTML+=`<div class="extra-box"><div class="extra-box-label">Plural</div><div class="extra-box-val">${w.p}</div></div>`;
+    extra.classList.add('show');
   }
 
   // Sentence
@@ -1064,7 +1068,6 @@ function renderCard(){
 
 function showMeaning(){
   document.getElementById('meaningReveal').classList.add('show');
-  document.getElementById('extraInfo').classList.add('show');
   document.getElementById('englishSentence').classList.add('show');
 }
 
